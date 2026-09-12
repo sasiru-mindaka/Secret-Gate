@@ -1,0 +1,60 @@
+ #
+ # SECRET GATE - ZERO-KNOWLEDGE EPHEMERAL MESSAGING ENGINE
+ #
+ # @package     SecretGate
+ # @version     1.0.0-Release
+ # 
+ # @author      Sasiru Mindaka <info@secretgate.site>
+ # @copyright   2026 Sasiru Mindaka
+ # 
+ # @license     AGPL-3.0-or-later <https://www.gnu.org/licenses/agpl-3.0.html>
+ # @link        https://github.com/sasiru-mindaka/Secret-Gate
+ # @see         https://secretgate.site
+ # 
+
+
+
+# CUSTOM ERROR PAGES
+ErrorDocument 403 /403.php
+ErrorDocument 404 /404.php
+
+# DIRECTORY LISTING – prevent file enumeration
+Options -Indexes -MultiViews
+
+
+# DOTFILE PROTECTION – keep secrets out of reach
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+
+# PHP ACCESS – deny by default, whitelist entry points only
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "^(index|403|404|privacy|terms|donate|feedback|feedback-api|api|social-card)\.php$">
+    Require all granted
+</FilesMatch>
+
+
+# ROUTING + STORAGE LOCKDOWN
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /404.php [L]
+
+RewriteRule ^storage/ - [F,L]
+
+
+# SENSITIVE FILE TYPES – block backups and configs
+<FilesMatch "\.(bak|sql|sqlite|zip|tar|gz|rar|7z|swp|swo|log|ini|conf|old|orig|save|json|lock)$">
+    Require all denied
+</FilesMatch>
+
+
+# DUPLICATE HEADERS – keep PHP as the single source of truth
+<IfModule mod_headers.c>
+    Header unset X-Powered-By
+</IfModule>
