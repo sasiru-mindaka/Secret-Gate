@@ -173,9 +173,8 @@ $sessionTokenTime = $_SESSION['feedback_csrf_time'] ?? 0;
 session_commit();
 
 $submittedToken = $_POST['csrf_token'] ?? '';
-$tokenExpired = !is_int($sessionTokenTime) && !ctype_digit((string)$sessionTokenTime)
-    ? true
-    : (time() - (int)$sessionTokenTime) > 1800;
+$tokenExpired = ((int)$sessionTokenTime === 0)
+    || (time() - (int)$sessionTokenTime) > 1800;
 
 if (
     !is_string($sessionToken) ||
@@ -210,6 +209,9 @@ $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
 $turnstileSecret = getenv('CF_TURNSTILE_SECRET_KEY') ?: '';
 
 if ($turnstileToken === '' || $turnstileSecret === '') {
+    if ($turnstileSecret === '') {
+        error_log('feedback-api: CF_TURNSTILE_SECRET_KEY not configured in .env');
+    }
     feedback_json_out([
         'success' => false,
         'error' => 'Verification failed. Please try again.'

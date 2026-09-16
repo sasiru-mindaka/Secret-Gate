@@ -37,7 +37,7 @@ if (!in_array($current_script, $allowed_scripts, true)) {
 }
 
 ?>
-<style>
+<style nonce="<?php echo htmlspecialchars($csp_nonce ?? '', ENT_QUOTES, 'UTF-8'); ?>">
     #loader-wrapper {
         position: fixed;
         inset: 0;
@@ -98,10 +98,3 @@ if (!in_array($current_script, $allowed_scripts, true)) {
     <div class="loader-text">Secret Gate</div>
     <div class="loader-bar"></div>
 </div>
-
-<script nonce="<?php echo htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8'); ?>">
-// =====================================================================
-// CONGRATULATIONS, YOU HAVE REACHED THE END:)
-// =====================================================================
-
-</script>

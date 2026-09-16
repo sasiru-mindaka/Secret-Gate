@@ -19,12 +19,8 @@
 
 require_once __DIR__ . '/config.php';
 
-// ACCESS RESTRICTION – allow only AJAX GET from same origin
+// ACCESS RESTRICTION – allow normal page loads, but reject foreign-site requests
 $reqMethod = strtoupper($_SERVER['REQUEST_METHOD'] ?? '');
-
-// Browsers do not add this header when a user directly opens a URL.
-$xRequestedWith = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '');
-$isAjaxRequest = hash_equals('xmlhttprequest', $xRequestedWith);
 
 // Verify Origin/Referer when the browser sends one.
 function feedback_normalize_host($host) {
@@ -56,7 +52,6 @@ $hasForeignReferer = ($refererHost !== '' && !$refererOk);
 
 if (
     $reqMethod !== 'GET' ||
-    !$isAjaxRequest ||
     $hasForeignOrigin ||
     $hasForeignReferer
 ) {
@@ -209,20 +204,15 @@ define('LOADING_ACCESS_ALLOWED', true);
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         .toast.success { border-color: rgba(158, 206, 106, 0.4); color: var(--success); }
         .toast.error { border-color: rgba(255, 75, 110, 0.4); color: var(--danger); }
-
-        #siteFooter {
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            padding: 14px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted);
-            position: relative; z-index: 1;
-        }
-        #siteFooter a { color: var(--text-muted); text-decoration: none; }
-        #siteFooter a:hover { color: var(--accent); }
-        .footer-dot { opacity: 0.5; }
     </style>
 </head>
 <body>
 
-<div id="main-wrapper">
+<?php include 'loading.php'; ?>
+
+<?php include __DIR__ . '/donation_banner.php'; ?>
+
+<main id="main-wrapper" style="display:none;">
     <div class="app-container">
         <div class="login-blob b1"></div>
         <div class="login-blob b2"></div>
@@ -249,13 +239,9 @@ define('LOADING_ACCESS_ALLOWED', true);
             <div class="back-home-link"><a href="index.php">← Back to Secret Gate</a></div>
         </div>
     </div>
-</div>
+</main>
 
-<footer id="siteFooter">
-    <span>© Secret Gate</span>
-    <span class="footer-dot">·</span>
-    <a href="privacy.php">Privacy Policy</a>
-</footer>
+<?php include __DIR__ . '/footer.php'; ?>
 
 <div id="toast" class="toast"></div>
 
@@ -396,6 +382,17 @@ define('LOADING_ACCESS_ALLOWED', true);
     document.addEventListener('DOMContentLoaded', function () {
         renderTurnstileWidget();
         fetchCsrfToken();
+    });
+
+    // PAGE INIT – reveal content after load to avoid flicker
+    window.addEventListener('load', function () {
+        setTimeout(function () {
+            const loader = document.getElementById('loader-wrapper');
+            if (loader) loader.classList.add('hidden');
+            const main = document.getElementById('main-wrapper');
+            if (main) main.style.display = 'flex';
+            if (typeof showDonationBanner === 'function') showDonationBanner();
+        }, 1000);
     });
 
 // =====================================================================

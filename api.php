@@ -59,22 +59,13 @@ if (!$isAjaxRequest || $apiForeignReferer || $apiForeignOrigin) {
 }
 
 // RESTRICT ACCESS – only allow requests from our own domain
-function normalize_host($h) {
-    $h = strtolower($h ?? '');
-    return preg_replace('/^www\./', '', $h);
-}
-
 $host = $_SERVER['HTTP_HOST'] ?? '';
 $refererHost = isset($_SERVER['HTTP_REFERER']) ? (parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST) ?? '') : '';
 $originHost = isset($_SERVER['HTTP_ORIGIN']) ? (parse_url($_SERVER['HTTP_ORIGIN'], PHP_URL_HOST) ?? '') : '';
 
-$refererOk = $refererHost !== '' && normalize_host($refererHost) === normalize_host($host);
-$originOk  = $originHost !== '' && normalize_host($originHost) === normalize_host($host);
+$refererOk = $refererHost !== '' && api_normalize_host($refererHost) === api_normalize_host($host);
+$originOk  = $originHost !== '' && api_normalize_host($originHost) === api_normalize_host($host);
 
-$refererPresentButWrong = $refererHost !== '' && !$refererOk;
-$originPresentButWrong  = $originHost !== '' && !$originOk;
-$hostMismatchEvidence = $refererPresentButWrong || $originPresentButWrong;
-$bothHeadersAbsent = $refererHost === '' && $originHost === '';
 $req_action_precheck = $_GET['action'] ?? '';
 $readonly_actions_precheck = defined('API_READONLY_GET_ACTIONS') ? API_READONLY_GET_ACTIONS : ['get_csrf', 'get_public_key', 'get_messages'];
 $is_allowed_readonly_get_precheck = $_SERVER['REQUEST_METHOD'] === 'GET' && in_array($req_action_precheck, $readonly_actions_precheck, true);
@@ -90,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'OPT
 header('Content-Type: application/json');
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $originHostOnly = $origin !== '' ? (parse_url($origin, PHP_URL_HOST) ?? '') : '';
-if ($originHostOnly !== '' && normalize_host($originHostOnly) === normalize_host($host)) {
+if ($originHostOnly !== '' && api_normalize_host($originHostOnly) === api_normalize_host($host)) {
     header('Access-Control-Allow-Origin: ' . $origin);
 } else {
     header('Access-Control-Allow-Origin: ' . (!empty($_SERVER['HTTPS']) ? 'https://' : 'http://') . $host);
@@ -114,30 +105,45 @@ try {
     ]);
 } catch (PDOException $e) {
     error_log('api.php: DB connection failed — ' . $e->getMessage());
-    die(json_encode(['success' => false, 'error' => 'Database connection failed']));
+    die(json_encode(['success' => false, 'error' => 'Something went wrong. Please refresh the page and try again.']));
 }
 
-// RANDOM CLEANUP TRIGGER – avoid running cleanup on every request
-if (mt_rand(1, 100) <= 5) {
+// CLEANUP TRIGGER – run at most once per interval rather than on ~5% of every
+// request, so a request flood can't be used to force repeated table scans.
+// Falls back to the old probabilistic trigger if APCu isn't available.
+$cleanup_min_interval = 300; // seconds
+if (function_exists('apcu_fetch')) {
+    $last_cleanup = apcu_fetch('sb_last_cleanup');
+    if ($last_cleanup === false || (time() - $last_cleanup) >= $cleanup_min_interval) {
+        apcu_store('sb_last_cleanup', time());
+        cleanup_expired_entities($conn);
+    }
+} elseif (mt_rand(1, 100) <= 5) {
     cleanup_expired_entities($conn);
-}
-
-// CSRF TOKEN GENERATION – give the app a token for POST actions
-if (empty($_SESSION['csrf_token'])) {
-    session_reopen();
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    session_commit();
 }
 
 // ACTION INIT – single place to choose the requested operation
 $action = $_REQUEST['action'] ?? '';
+
+// CSRF TOKEN GENERATION – give the app a token for POST actions. Skipped for
+// read-only GET callers (e.g. get_public_key) so anonymous visitors don't get
+// a session created just for reading data.
+if (
+    $action !== 'get_public_key' &&
+    $action !== 'get_auth_salt' &&
+    empty($_SESSION['csrf_token'])
+) {
+    session_reopen();
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    session_commit();
+}
 $response = ['success' => false];
 
 // CSRF VALIDATION – stop forged POST requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action !== '') {
     $client_csrf = $_POST['csrf_token'] ?? '';
     if (!hash_equals($_SESSION['csrf_token'], $client_csrf)) {
-        die(json_encode(['success' => false, 'error' => 'Security token mismatch (CSRF)']));
+        die(json_encode(['success' => false, 'error' => 'This page has been open for a while. Please refresh the page and try again.']));
     }
 }
 
@@ -147,7 +153,7 @@ $turnstile_protected_actions = ['send_message'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, $turnstile_protected_actions, true)) {
     $turnstile_token = $_POST['cf_turnstile_response'] ?? '';
     if (empty($turnstile_token)) {
-        die(json_encode(['success' => false, 'error' => 'Verification failed. Please try again.']));
+        die(json_encode(['success' => false, 'error' => 'Verification failed. Please refresh the page and try again.']));
     }
 
     $verify_data = [
@@ -171,7 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, $turnstile_protec
 
     if ($curl_error || empty($turnstile_result['success'])) {
         error_log('Turnstile verification failed: ' . ($curl_error ?: json_encode($turnstile_result['error-codes'] ?? [])));
-        die(json_encode(['success' => false, 'error' => 'Verification failed. Please try again.']));
+        die(json_encode(['success' => false, 'error' => 'Verification failed. Please refresh the page and try again.']));
     }
 }
 
@@ -180,10 +186,11 @@ if (!defined('MAX_ENCRYPTED_MESSAGE_BYTES')) {
     define('MAX_ENCRYPTED_MESSAGE_BYTES', 50 * 1024);
 }
 
-// INPUT SANITIZATION HELPER – keep stored/echoed values safe
+// INPUT SANITIZATION HELPER – trim only; HTML-escaping belongs at output time,
+// not at storage time (storing escaped HTML causes double-encoding later).
 function sanitize_input($data) {
     if (is_null($data)) return '';
-    return htmlspecialchars(trim($data), ENT_QUOTES, 'UTF-8');
+    return trim((string)$data);
 }
 
 // PUBLIC ID VALIDATION HELPER – keep IDs in the expected format
@@ -207,7 +214,7 @@ function cleanup_expired_entities(PDO $conn): void {
 if (function_exists('rate_limit_check')) {
     $ip = function_exists('getClientIp') ? getClientIp() : ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
     if (!rate_limit_check($ip, 60, 60)) {
-        die(json_encode(['success' => false, 'error' => 'Rate limit exceeded. Please slow down.']));
+        die(json_encode(['success' => false, 'error' => "You're going a bit too fast. Please wait a moment and try again."]));
     }
 }
 
@@ -223,9 +230,10 @@ switch ($action) {
     case 'create_link':
         $public_id = sanitize_input($_POST['public_id'] ?? '');
         $public_key = $_POST['public_key'] ?? '';
-        $password = $_POST['password'] ?? '';
+        $auth_key  = $_POST['auth_key']  ?? '';
+        $auth_salt = $_POST['auth_salt'] ?? '';
 
-        if (empty($public_id) || empty($public_key) || empty($password)) {
+        if (empty($public_id) || empty($public_key) || empty($auth_key) || empty($auth_salt)) {
             $response['error'] = 'Missing required fields';
             break;
         }
@@ -233,8 +241,12 @@ switch ($action) {
             $response['error'] = 'Invalid public ID format';
             break;
         }
-        if (strlen($password) < 8) {
-            $response['error'] = 'Password must be at least 8 characters';
+        if (!preg_match('/^[a-f0-9]{64}$/', $auth_key)) {
+            $response['error'] = 'Invalid auth key format';
+            break;
+        }
+        if (strlen($auth_salt) > 32) {
+            $response['error'] = 'Invalid auth salt';
             break;
         }
         // PUBLIC KEY FORMAT – reject anything that is not a usable JWK
@@ -243,12 +255,12 @@ switch ($action) {
             break;
         }
 
-        // PASSWORD HASH – never store the raw password
-        $hash = password_hash($password, PASSWORD_ARGON2ID);
+        // AUTH KEY HASH – server never sees the plaintext password
+        $hash = password_hash($auth_key, PASSWORD_ARGON2ID);
 
         try {
-            $stmt = $conn->prepare("INSERT INTO sb_links (public_id, public_key, password_hash) VALUES (?, ?, ?)");
-            $stmt->execute([$public_id, $public_key, $hash]);
+            $stmt = $conn->prepare("INSERT INTO sb_links (public_id, public_key, password_hash, auth_salt) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$public_id, $public_key, $hash, $auth_salt]);
             $response['success'] = true;
         } catch (PDOException $e) {
             error_log('api.php: create_link failed — ' . $e->getMessage());
@@ -263,6 +275,11 @@ switch ($action) {
             $response['error'] = 'Invalid or missing public_id';
             break;
         }
+        // ENUMERATION THROTTLE – slow down brute-forcing of public IDs
+        if (function_exists('rate_limit_check') && !rate_limit_check('enum_' . getClientIp(), 30, 60)) {
+            $response['error'] = 'Too many requests. Please slow down.';
+            break;
+        }
         $stmt = $conn->prepare("SELECT public_key FROM sb_links WHERE public_id = ?");
         $stmt->execute([$public_id]);
         if ($row = $stmt->fetch()) {
@@ -272,6 +289,29 @@ switch ($action) {
             $response['error'] = 'Receiver not found';
         }
         break;
+
+    // GET AUTH SALT – Provides the salt required for the client to derive the auth_key.
+    case 'get_auth_salt':
+        $public_id = sanitize_input($_GET['public_id'] ?? '');
+        if (empty($public_id) || !validate_public_id($public_id)) {
+            $response['error'] = 'Invalid or missing public_id';
+            break;
+        }
+        // ENUMERATION THROTTLE – slow down brute-forcing of public IDs
+        if (function_exists('rate_limit_check') && !rate_limit_check('enum_' . getClientIp(), 30, 60)) {
+            $response['error'] = 'Too many requests. Please slow down.';
+            break;
+        }
+        $stmt = $conn->prepare("SELECT auth_salt FROM sb_links WHERE public_id = ?");
+        $stmt->execute([$public_id]);
+        if ($row = $stmt->fetch()) {
+            $response['success'] = true;
+            $response['auth_salt'] = $row['auth_salt'];
+        } else {
+            $response['error'] = 'Link not found';
+        }
+        break;
+
 
     // SEND MESSAGE – store only ciphertext for the receiver
     case 'send_message':
@@ -326,6 +366,12 @@ switch ($action) {
             $response['error'] = 'Invalid or missing public_id';
             break;
         }
+        // PER-LINK THROTTLE – ciphertext can't be read without the key, but
+        // repeated polling still leaks message counts/timing, so cap it.
+        if (function_exists('rate_limit_check') && !rate_limit_check('getmsg_' . getClientIp() . '_' . $public_id, 20, 60)) {
+            $response['error'] = 'Too many requests. Please slow down.';
+            break;
+        }
 
         // ACCESS TOUCH – account TTL depends on last read
         $touch = $conn->prepare("UPDATE sb_links SET last_accessed_at = NOW() WHERE public_id = ?");
@@ -347,8 +393,8 @@ switch ($action) {
     // VERIFY RESTORE – prove ownership before restoring access
     case 'verify_restore':
         $public_id = sanitize_input($_POST['public_id'] ?? '');
-        $password = $_POST['password'] ?? '';
-        if (empty($public_id) || empty($password)) {
+        $auth_key = $_POST['auth_key'] ?? '';
+        if (empty($public_id) || empty($auth_key)) {
             $response['error'] = 'Missing fields';
             break;
         }
@@ -359,9 +405,18 @@ switch ($action) {
         $stmt = $conn->prepare("SELECT password_hash FROM sb_links WHERE public_id = ?");
         $stmt->execute([$public_id]);
         if ($row = $stmt->fetch()) {
-            if (password_verify($password, $row['password_hash'])) {
+            if (password_verify($auth_key, $row['password_hash'])) {
+                // SESSION FIXATION GUARD – issue a fresh session ID and CSRF
+                // token now that the caller has proven ownership of the link.
+                session_reopen();
+                session_regenerate_id(true);
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                session_commit();
+
                 $response['success'] = true;
+                $response['csrf_token'] = $_SESSION['csrf_token'];
             } else {
+                record_failed_auth_attempt(getClientIp());
                 $response['error'] = 'Invalid password';
             }
         } else {
@@ -390,7 +445,7 @@ switch ($action) {
     // SET AUTO DELETE SETTINGS – owner controls retention
     case 'set_auto_delete_settings':
         $public_id = sanitize_input($_POST['public_id'] ?? '');
-        $password  = $_POST['password'] ?? '';
+        $auth_key  = $_POST['auth_key'] ?? '';
         $message_ttl_raw = $_POST['message_ttl_seconds'] ?? '0';
         $account_ttl_raw = $_POST['account_ttl_seconds'] ?? '0';
 
@@ -398,8 +453,8 @@ switch ($action) {
             $response['error'] = 'Invalid or missing public_id';
             break;
         }
-        if (empty($password)) {
-            $response['error'] = 'Password required to change auto-delete settings';
+        if (empty($auth_key)) {
+            $response['error'] = 'Auth key required to change auto-delete settings';
             break;
         }
         if (!ctype_digit((string)$message_ttl_raw) || !ctype_digit((string)$account_ttl_raw)) {
@@ -417,7 +472,8 @@ switch ($action) {
         $ownerCheck->execute([$public_id]);
         $ownerRow = $ownerCheck->fetch();
 
-        if (!$ownerRow || !password_verify($password, $ownerRow['password_hash'])) {
+        if (!$ownerRow || !password_verify($auth_key, $ownerRow['password_hash'])) {
+            record_failed_auth_attempt(getClientIp());
             $response['error'] = 'Invalid password';
             break;
         }
@@ -438,14 +494,14 @@ switch ($action) {
     // DELETE LINK – owner removes link and messages together
     case 'delete_link':
         $public_id = sanitize_input($_POST['public_id'] ?? '');
-        $password  = $_POST['password'] ?? '';
+        $auth_key  = $_POST['auth_key'] ?? '';
 
         if (empty($public_id) || !validate_public_id($public_id)) {
             $response['error'] = 'Invalid or missing public_id';
             break;
         }
-        if (empty($password)) {
-            $response['error'] = 'Password required to delete this link';
+        if (empty($auth_key)) {
+            $response['error'] = 'Auth key required to delete this link';
             break;
         }
 
@@ -454,8 +510,9 @@ switch ($action) {
         $ownerCheck->execute([$public_id]);
         $ownerRow = $ownerCheck->fetch();
 
-        if (!$ownerRow || !password_verify($password, $ownerRow['password_hash'])) {
-            $response['error'] = 'Invalid password';
+        if (!$ownerRow || !password_verify($auth_key, $ownerRow['password_hash'])) {
+            record_failed_auth_attempt(getClientIp());
+            $response['error'] = 'Invalid auth key';
             break;
         }
 
@@ -472,6 +529,24 @@ switch ($action) {
 
             $conn->commit();
             $response['success'] = true;
+
+            // SESSION WIPE – clear all server-side session data and its cookie
+            session_reopen();
+            $_SESSION = [];
+            session_commit();
+            if (ini_get('session.use_cookies')) {
+                $cookieParams = session_get_cookie_params();
+                setcookie(
+                    session_name(),
+                    '',
+                    time() - 42000,
+                    $cookieParams['path'],
+                    $cookieParams['domain'],
+                    $cookieParams['secure'],
+                    $cookieParams['httponly']
+                );
+            }
+            $response['clear_client_storage'] = true;
         } catch (PDOException $e) {
             $conn->rollBack();
             error_log('api.php: delete_link failed — ' . $e->getMessage());

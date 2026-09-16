@@ -30,8 +30,7 @@ http_response_code(404);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 – Page Not Found | SecretBox</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtmtKQu8TiXCHybz5G3fK2iKMreG49adK6U3bh22Rbc2Cf1+A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title>404 – Page Not Found | Secret Gate</title>
     <link rel="icon" type="image/png" href="./images/secret_gate_logo.png">
             <style nonce="<?php echo htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8'); ?>">
         body {
@@ -59,10 +58,11 @@ http_response_code(404);
     <div class="container">
         <h1>404</h1>
         <p>The page you're looking for doesn't exist.</p>
-        <a href="https://secretgate.site">Return to Homepage</a> <!-- Add your domain here -->
+        <a href="<?php echo htmlspecialchars(defined('SITE_URL') ? SITE_URL : 'https://secretgate.site', ENT_QUOTES, 'UTF-8'); ?>">Return to Homepage</a>
     </div>
 </body>
 </html>
+
 <?php exit();
 
 // =====================================================================

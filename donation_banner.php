@@ -29,10 +29,15 @@ if (!defined('CONFIG_LOADED')) {
         background: linear-gradient(90deg, rgba(71,165,255,0.12), rgba(255,143,0,0.08));
         border-bottom: 1px solid transparent; font-family: var(--font-mono); font-size: 0.75rem;
         color: var(--text-muted); text-align: center; position: relative; z-index: 20;
-        flex-wrap: wrap; pointer-events: none; flex-shrink: 0;
+        flex-wrap: wrap; pointer-events: none; flex-shrink: 0; box-sizing: border-box;
         transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.35s ease, border-color 0.35s ease;
     }
-    .donation-banner.visible { max-height: 120px; padding: 7px 14px; opacity: 1; border-bottom-color: var(--border-soft); pointer-events: auto; }
+    /* Generous caps so wrapped text (2 lines + close button) never gets clipped by
+       the max-height transition; once the transition finishes, JS switches this to
+       max-height:none so the banner can never be cut off regardless of content
+       reflow (font scaling, zoom, orientation change, etc). */
+    .donation-banner.visible { max-height: 200px; padding: 7px 14px; opacity: 1; border-bottom-color: var(--border-soft); pointer-events: auto; }
+    .donation-banner.expanded { max-height: none; overflow: visible; }
     .donation-banner .donation-banner-text { color: var(--text); }
     .donation-banner a.donation-banner-link { color: var(--accent); font-weight: 600; text-decoration: none; border-bottom: 1px dashed var(--accent-soft); }
     .donation-banner a.donation-banner-link:hover { color: var(--text); border-bottom-color: var(--text); }
@@ -42,14 +47,14 @@ if (!defined('CONFIG_LOADED')) {
 
     @media (max-width: 600px) {
         .donation-banner { font-size: 0.62rem; gap: 7px; line-height: 1.25; }
-        .donation-banner.visible { max-height: 90px; padding: 5px 10px; }
+        .donation-banner.visible { max-height: 140px; padding: 5px 10px; }
         .donation-banner-close { font-size: 0.85rem !important; padding: 3px 5px !important; }
         .donation-banner-link { white-space: nowrap; }
     }
     @media (max-width: 420px) {
         .donation-banner-text .full { display: none; }
         .donation-banner-text .short { display: inline; }
-        .donation-banner.visible { max-height: 60px; padding: 5px 8px; }
+        .donation-banner.visible { max-height: 100px; padding: 5px 8px; }
         .donation-banner { font-size: 0.58rem; gap: 5px; }
         .donation-banner-link { font-size: 0.58rem; }
     }
@@ -64,14 +69,37 @@ if (!defined('CONFIG_LOADED')) {
 <script nonce="<?php echo htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8'); ?>">
 (function () {
     // GLOBAL ACCESS – let other scripts trigger the banner
+    var donationBannerShown = false;
     function showDonationBanner() {
         var banner = document.getElementById('donationBanner');
-        if (!banner) return;
+        if (!banner || donationBannerShown) return;
+        donationBannerShown = true;
         banner.classList.add('visible');
+
+        // Once the open transition finishes, drop the max-height cap entirely so the
+        // banner can never end up visually clipped, no matter how the content
+        // reflows afterwards (dynamic mobile toolbar resize, zoom, rotation, etc).
+        banner.addEventListener('transitionend', function onOpen(e) {
+            if (e.propertyName !== 'max-height') return;
+            if (banner.classList.contains('visible')) banner.classList.add('expanded');
+            banner.removeEventListener('transitionend', onOpen);
+        });
+
         var closeBtn = document.getElementById('donationClose');
         var link = document.getElementById('donationLink');
-        if (closeBtn) closeBtn.addEventListener('click', function () { banner.classList.remove('visible'); }, { once: true });
-        if (link) link.addEventListener('click', function () { banner.classList.remove('visible'); }, { once: true });
+        function dismiss() {
+            banner.classList.remove('expanded');
+            // Force layout to read the real content height back into max-height
+            // before removing 'visible', so the closing transition has something
+            // concrete to animate from instead of jumping straight from 'none'.
+            banner.style.maxHeight = banner.scrollHeight + 'px';
+            requestAnimationFrame(function () {
+                banner.classList.remove('visible');
+                banner.style.maxHeight = '';
+            });
+        }
+        if (closeBtn) closeBtn.addEventListener('click', dismiss, { once: true });
+        if (link) link.addEventListener('click', dismiss, { once: true });
     }
     window.showDonationBanner = showDonationBanner;
 })();

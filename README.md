@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔒 Secret Gate
+# Secret Gate
 
 ### A zero-knowledge, ephemeral messaging engine that never sees your secrets.
 
@@ -19,24 +19,24 @@
 
 ## Overview
 
-**Secret Gate** is a self-hostable, ephemeral messaging engine for people who want an anonymous inbox without handing a server the keys to read it. You generate a link, share it, and anyone can drop an encrypted message into it — but the encryption/decryption happens entirely in the visitor's browser using the **Web Crypto API**. The server only ever stores ciphertext it cannot decrypt.
+**Secret Gate** is a self-hostable, ephemeral messaging engine for people who want an anonymous inbox without handing a server the keys to read it. You generate a link, share it, and anyone can drop an encrypted message into it — but the encryption and decryption happen entirely in the visitor's browser using the **Web Crypto API**. The server only ever stores ciphertext it is mathematically incapable of decrypting.
 
 There's no signup, no email, no phone number, and no tracking. Just a keypair, a password, and a link. When a message or link expires, it's gone — enforced at the database and cache layer, not by a "trust us" policy.
 
-It was built deliberately **without** a framework. No Composer dependency tree, no `node_modules`, no build step. ~10 PHP files you can read top to bottom in an afternoon, deployable on almost any LAMP-style stack.
+It was built deliberately **without** a framework. No Composer dependency tree, no `node_modules`, no build step — just a handful of clean, native PHP files you can read top to bottom in an afternoon, deployable on almost any LAMP-style stack.
 
 ---
 
 ## ✨ Key Features
 
-- 🔐 **True Zero-Knowledge Encryption** — Hybrid RSA-OAEP (2048-bit) + AES-256-GCM performed client-side via `window.crypto.subtle`. The server stores only ciphertext and a public key; it is mathematically incapable of reading message contents.
-- 🗝️ **Server-Side Private Key, Zero Exposure** — Each link's private key is wrapped with a password-derived AES-256-GCM key (PBKDF2, 300,000 iterations) and held only in the browser's IndexedDB vault — never transmitted or logged.
-- 🪶 **Zero Framework Bloat** — No Laravel, no Symfony, no Composer sprawl. Just clean, native, auditable PHP.
-- ⏳ **Ephemeral by Design** — Per-link message TTLs and inactivity-based account expiry, enforced via MySQL `expires_at` columns and Redis TTL keys — not a soft "please delete this" toggle.
-- 🛡️ **Hardened Security Baseline** — Argon2id password hashing, strict same-origin + CSRF token validation on every state-changing request, PDO prepared statements everywhere, and a whitelist-only file execution model via `.htaccess`.
+- 🔐 **True Zero-Knowledge Encryption** — Hybrid RSA-OAEP (2048-bit) + AES-256-GCM performed entirely client-side via `window.crypto.subtle`. The server stores only ciphertext and a public key; it never sees plaintext, passwords, or private keys.
+- 🗝️ **Password-Wrapped Private Key, Zero Server Exposure** — Each inbox's RSA private key is wrapped with a PBKDF2-derived (300,000 iterations) AES-256-GCM key and held only inside the browser's IndexedDB vault, itself sealed behind a non-extractable, per-device AES-GCM key — never transmitted, never logged.
+- 🪶 **Zero Framework Bloat** — No Laravel, no Symfony, no Composer sprawl. Just clean, native, auditable PHP across roughly a dozen files.
+- ⏳ **Ephemeral by Design** — Per-link message TTLs and inactivity-based account expiry, enforced via MySQL `expires_at` columns — not a soft "please delete this" toggle.
+- 🛡️ **Hardened Security Baseline** — Argon2id password hashing, strict same-origin + CSRF token validation on every state-changing request, PDO prepared statements everywhere, per-request CSP nonces, and a whitelist-only file execution model via `.htaccess`.
 - 🕵️ **Privacy by Default** — No accounts, no email, no PII collected or stored, ever. What we don't collect, we can't leak.
-- 🚦 **Abuse-Resistant** — Redis-backed sliding-window rate limiting, IP blacklisting/burning, honeypot fields, and Cloudflare Turnstile on public-facing forms.
-- 📦 **Deploy Anywhere** — Runs on any standard Apache + PHP-FPM + MySQL stack. No containers required (though it'll happily run in one).
+- 🚦 **Abuse-Resistant** — Redis-backed sliding-window rate limiting, IP blacklisting, repeat-offender "burning", honeypot fields, and Cloudflare Turnstile on public-facing forms. Redis is a hard dependency: if it's unreachable, Secret Gate fails closed with a maintenance page rather than silently degrading.
+- 📦 **Deploy Anywhere** — Runs on any standard Apache + PHP-FPM + MySQL + Redis stack. No containers required (though it'll happily run in one).
 
 ---
 
@@ -50,7 +50,7 @@ Secret Gate uses **hybrid encryption**: an RSA-OAEP keypair identifies the inbox
 │                                                                             │
 │   Browser                                                                   │
 │   ├─ Generate RSA-OAEP 2048-bit keypair              (window.crypto.subtle) │
-│   ├─ Derive AES-256-GCM wrapping key                 (PBKDF2, password)     │
+│   ├─ Derive AES-256-GCM wrapping key                 (PBKDF2, 300k iters)   │
 │   ├─ Encrypt(private_key, wrapping_key)         ──►  store in IndexedDB     │
 │   │                                                  (never leaves device)  │
 │   └─ POST public_key (JWK) + Argon2id(password) ──► Server                  │
@@ -64,7 +64,7 @@ Secret Gate uses **hybrid encryption**: an RSA-OAEP keypair identifies the inbox
 │                       2. SENDING A MESSAGE (Sender)                         │
 │                                                                             │
 │   Browser                             Server                                │
-│   ├─ GET public_key(JWK) for link           ──►  fetch from sb_links        │
+│   ├─ GET public_key (JWK) for link          ──►  fetch from sb_links        │
 │   ├─ Generate one-time AES-256-GCM key                                      │
 │   ├─ Encrypt(message, AES key)                                              │
 │   ├─ Encrypt(AES key, RSA-OAEP public_key)                                  │
@@ -94,10 +94,10 @@ Secret Gate uses **hybrid encryption**: an RSA-OAEP keypair identifies the inbox
 
 - PHP 8.0+ with `pdo_mysql`, `redis`, and `openssl` extensions enabled
 - MySQL 8.0+ (or MariaDB equivalent)
-- Redis server *(optional but recommended)* — powers rate limiting and IP blacklisting/burning. If Redis isn't installed or reachable, Secret Gate automatically falls back to a file-based store under `storage/` with the same behavior, so the app still runs without it
+- **Redis server (required)** — powers rate limiting, IP blacklisting, and abuse "burning." Secret Gate fails closed (serves a 503 maintenance page) if Redis is unreachable, by design — there is no silent fallback
 - Apache with `mod_rewrite` and `mod_headers`
 - A [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile/) site/secret key pair (used on the feedback form)
-- A Telegram bot token + chat ID (used to relay feedback submissions — optional but required for the feedback form to function)
+- A Telegram bot token + chat ID (used to relay feedback submissions — required for the feedback form to function)
 
 ### 1. Clone the repository
 
@@ -120,8 +120,7 @@ DB_USER=your_db_user
 DB_PASS=your_db_password
 DB_NAME=schema
 
-# Redis (optional — leave as-is if you're not running Redis;
-# the app falls back to file-based rate limiting automatically)
+# Redis (required — Secret Gate will not serve traffic without it)
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 REDIS_PASS=
@@ -151,7 +150,7 @@ This creates the two core tables:
 
 ### 4. Point your web server at the project root
 
-Apache is expected — `.htaccess` handles routing, PHP file whitelisting, and blocks direct access to everything except the entry-point scripts (`index.php`, `api.php`, `feedback.php`, etc.). Make sure `AllowOverride All` is set for the vhost.
+Apache is expected — `.htaccess` handles routing, denies direct access to every `.php` file by default, and whitelists only the entry-point scripts (`index.php`, `api.php`, `feedback.php`, etc.). Make sure `AllowOverride All` is set for the vhost.
 
 ### 5. Visit your domain and generate your first link 🎉
 
@@ -162,16 +161,17 @@ Apache is expected — `.htaccess` handles routing, PHP file whitelisting, and b
 | Layer | Protection | Implementation |
 |---|---|---|
 | **Message Content** | Never readable by the server | Client-side AES-256-GCM, per-message single-use key |
-| **Private Keys** | Never transmitted | RSA-OAEP private key wrapped locally with a password-derived AES-256-GCM key, stored only in browser IndexedDB |
+| **Private Keys** | Never transmitted | RSA-OAEP private key wrapped locally with a PBKDF2-derived AES-256-GCM key, stored only in browser IndexedDB behind a non-extractable device key |
 | **Passwords** | Never stored in plaintext | Argon2id hashing (`PASSWORD_ARGON2ID`) |
 | **Database Access** | No injection surface | 100% PDO prepared statements, zero raw query concatenation |
 | **State-Changing Requests** | CSRF-protected | Per-session CSRF tokens with expiry, validated via `hash_equals()` |
-| **Cross-Origin Requests** | Rejected by default | Strict Origin/Referer host matching, same-origin-only CORS headers |
-| **Bot / Abuse Traffic** | Rate-limited & blocked, no message-linked IP logging | Redis-backed sliding-window rate limiting (auto-falls back to file storage if Redis is unavailable) — request counters expire on their own within the rate window (~30–60s); temporary IP blacklist entries auto-expire (default 24h); repeat offenders can be permanently "burned" and are kept blocked until manually cleared. IPs are used only for this abuse-prevention logic — never stored alongside messages or link data. |
-| **Data Expiry** | Enforced, not optional | Per-message TTL and inactivity-based link auto-deletion (MySQL + Redis) |
-| **File/Config Exposure** | Locked down | `.htaccess` denies direct PHP execution outside a strict whitelist, blocks `.env`, `.sql`, `.log`, and other sensitive extensions |
-| **Personal Data** | Not collected | No accounts, no email, no phone number, no analytics/tracking scripts |
-| **Sessions** | Hardened cookies | `HttpOnly`, `Secure`, `SameSite=Lax`, strict mode, `read_and_close` session handling |
+| **Cross-Origin Requests** | Rejected by default | Strict Origin/Referer host matching, same-origin-only CORS headers, XHR-only enforcement on internal APIs |
+| **Bot / Abuse Traffic** | Rate-limited & blocked, no message-linked IP logging | Redis-backed sliding-window rate limiting, IP blacklisting, and permanent "burning" for repeat offenders; the app fails closed (503) if Redis is unreachable. IPs are used only for this abuse-prevention logic — never stored alongside messages or link data |
+| **Data Expiry** | Enforced, not optional | Per-message TTL and inactivity-based link auto-deletion, swept on every request |
+| **File/Config Exposure** | Locked down | `.htaccess` denies direct execution of every PHP file except a strict whitelist, blocks dotfiles, and blocks backup/config/log extensions (`.env`, `.sql`, `.log`, `.bak`, and more) |
+| **Response Headers** | Hardened by default | Per-request CSP with nonces, HSTS, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, a locked-down `Permissions-Policy`, and no-cache headers on every response |
+| **Personal Data** | Not collected | No accounts, no email, no phone number, no analytics or tracking scripts |
+| **Sessions** | Hardened cookies | `HttpOnly`, `Secure`, `SameSite=Strict`, strict mode, `read_and_close` session handling |
 
 ---
 

@@ -4,8 +4,8 @@
 /**
  * SECRET GATE - ZERO-KNOWLEDGE EPHEMERAL MESSAGING ENGINE
  *
- * @package     SecretGate
- * @version     1.0.0-Release
+ * @package     Secret-Gate
+ * @version     1.5.0-Release
  * 
  * @author      Sasiru Mindaka <info@secretgate.site>
  * @copyright   2026 Sasiru Mindaka
@@ -15,6 +15,14 @@
  * @see         https://secretgate.site
  */
 
+
+// INCLUSION GUARD – prevent duplicate setup on multiple includes. Placed
+// first so a second require_once (or a require, should one ever slip in)
+// can't re-run loadEnv() and the constant checks below.
+if (defined('CONFIG_LOADED')) {
+    return;
+}
+define('CONFIG_LOADED', true);
 
 // OUTPUT BUFFERING – prevent "headers already sent" errors
 if (!defined('SB_OUTPUT_BUFFER_STARTED')) {
@@ -37,6 +45,13 @@ function loadEnv($filePath) {
         if (strpos($line, '=') !== false) {
             list($name, $value) = explode('=', $line, 2);
             $name = trim($name);
+            $value = trim($value);
+            // Strip a trailing unquoted "# comment" so "KEY=value # note" doesn't
+            // become part of the value. Only do this when the value isn't quoted,
+            // so a literal '#' inside a quoted value is preserved.
+            if ($value !== '' && $value[0] !== '"' && $value[0] !== "'") {
+                $value = preg_replace('/\s+#.*$/', '', $value);
+            }
             $value = trim(trim($value), '"\'');
 
             if ($name !== '' && !array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
@@ -50,11 +65,17 @@ function loadEnv($filePath) {
 
 loadEnv(__DIR__ . '/../.env');  // Add your env path here
 
-// INCLUSION GUARD – prevent duplicate setup on multiple includes
-if (defined('CONFIG_LOADED')) {
-    return;
+// SITE-WIDE CONSTANTS – single source of truth so pages/footers/cards don't
+// hardcode the domain, contact email, or repo URL in a dozen places.
+if (!defined('SITE_URL')) {
+    define('SITE_URL', rtrim(getenv('SITE_URL') ?: 'https://secretgate.site', '/'));
 }
-define('CONFIG_LOADED', true);
+if (!defined('SITE_EMAIL')) {
+    define('SITE_EMAIL', getenv('SITE_EMAIL') ?: 'info@secretgate.site');
+}
+if (!defined('GITHUB_REPO')) {
+    define('GITHUB_REPO', 'https://github.com/sasiru-mindaka/Secret-Gate'); // confirm this path
+}
 
 // ACCESS CONTROL – only allow inclusion from whitelisted scripts
 $allowed_scripts = [
@@ -85,6 +106,7 @@ if (!defined('API_READONLY_GET_ACTIONS')) {
         'get_public_key',
         'get_messages',
         'get_auto_delete_settings',
+        'get_auth_salt',
     ]);
 }
 
@@ -177,7 +199,7 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
 ini_set('session.use_only_cookies', 1);
 ini_set('session.use_strict_mode', 1);
 ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.cookie_samesite', 'Strict');
 
 $is_https =
     (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
@@ -187,9 +209,11 @@ session_set_cookie_params([
     'lifetime' => 86400,
     'path' => '/',
     'domain' => '',
-    'secure' => true,
+    // Require HTTPS in production; allow plain-HTTP localhost during development
+    // so the session cookie isn't silently dropped by the browser there.
+    'secure' => $is_https || $app_env === 'production',
     'httponly' => true,
-    'samesite' => 'Lax',
+    'samesite' => 'Strict',
 ]);
 if (session_status() === PHP_SESSION_NONE) {
     session_start(['read_and_close' => true]);
@@ -219,12 +243,11 @@ if (!function_exists('session_commit')) {
 
 // SHUTDOWN SAFETY NET – ensure session is written and output flushed
 register_shutdown_function(function () {
+    // Only flush a session that a handler actually reopened with
+    // session_reopen() (PHP_SESSION_ACTIVE). If nothing reopened it, the
+    // session is PHP_SESSION_NONE and must stay that way — starting one here
+    // would create/write an empty session file for every plain GET request.
     if (session_status() === PHP_SESSION_ACTIVE) {
-        session_write_close();
-    } elseif (session_status() === PHP_SESSION_NONE) {
-        $pending = $_SESSION ?? [];
-        session_start();
-        $_SESSION = $pending;
         session_write_close();
     }
 

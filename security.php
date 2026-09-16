@@ -4,8 +4,8 @@
 /**
  * SECRET GATE - ZERO-KNOWLEDGE EPHEMERAL ENGINE
  *
- * @package     SecretGate
- * @version     1.0.0-Release
+ * @package     Secret-Gate
+ * @version     1.6.0-Release
  * 
  * @author      Sasiru Mindaka <info@secretgate.site>
  * @copyright   2026 Sasiru Mindaka
@@ -13,7 +13,6 @@
  * @license     AGPL-3.0-or-later <https://www.gnu.org/licenses/agpl-3.0.html>
  * @link        https://github.com/sasiru-mindaka/Secret-Gate
  * @see         https://secretgate.site
- * 
  */
 
 
@@ -52,7 +51,7 @@ if (php_sapi_name() !== 'cli') {
         $req_action = $_GET['action'] ?? '';
         $readonly_actions = defined('API_READONLY_GET_ACTIONS')
             ? API_READONLY_GET_ACTIONS
-            : ['get_csrf', 'get_public_key', 'get_messages'];
+            : ['get_csrf', 'get_public_key', 'get_messages', 'get_auto_delete_settings', 'get_auth_salt'];
 
         $is_allowed_readonly_get =
             $req_method === 'GET' &&
@@ -101,7 +100,7 @@ if (php_sapi_name() !== 'cli') {
 // SECURITY HEADERS – harden browser protections
 header("X-Frame-Options: DENY");
 header("X-Content-Type-Options: nosniff");
-header("X-XSS-Protection: 1; mode=block");
+header("X-XSS-Protection: 0");
 header("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload");
 header("Referrer-Policy: strict-origin-when-cross-origin");
 header("Cross-Origin-Resource-Policy: same-site");
@@ -132,7 +131,6 @@ header("Content-Security-Policy: " . $csp);
 // CORS – control cross-origin access
 $allowedOrigins = [];
 $envOrigins = getenv('CORS_ALLOWED_ORIGINS');
-
 $corsHostFallback = null;
 
 if ($envOrigins) {
@@ -178,228 +176,289 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     exit;
 }
 
-// STORAGE – define paths for security files
-if (!defined('STORAGE_DIR')) {
-    define('STORAGE_DIR', __DIR__ . '/storage');
-}
-if (!defined('BLACKLIST_FILE')) {
-    define('BLACKLIST_FILE', STORAGE_DIR . '/blacklist.json');
-}
-if (!defined('RATE_LIMIT_DIR')) {
-    define('RATE_LIMIT_DIR', STORAGE_DIR . '/rate_limits');
-}
-if (!defined('BURNED_IPS_FILE')) {
-    define('BURNED_IPS_FILE', STORAGE_DIR . '/burned_ips.json');
-}
-
-foreach ([STORAGE_DIR, RATE_LIMIT_DIR] as $dir) {
-    if (!is_dir($dir)) {
-        if (!@mkdir($dir, 0755, true)) {
-            error_log("Secret Gate: cannot create directory $dir (permissions?)");
-        }
-    }
-}
-
-// CLIENT IP – resolve real IP behind proxies
-if (!function_exists('getClientIp')) {
-    function getClientIp(): string {
-        $headers = [
-            'HTTP_CF_CONNECTING_IP',
-            'HTTP_X_FORWARDED_FOR',
-            'HTTP_X_REAL_IP',
-            'REMOTE_ADDR'
-        ];
-
-        foreach ($headers as $h) {
-            if (!empty($_SERVER[$h])) {
-                $ips = explode(',', $_SERVER[$h]);
-                $ip = trim($ips[0]);
-                if (filter_var($ip, FILTER_VALIDATE_IP)) {
-                    return $ip;
-                }
-            }
-        }
-
-        return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-    }
-}
-
-// REDIS – lazy connection with fallback
+// =====================================================================
+// REDIS CONNECTION — single attempt per request
+// =====================================================================
 if (!function_exists('get_redis')) {
     function get_redis(): ?Redis {
         static $redis = null;
-        static $failed = false;
+        static $tried = false;
 
-        if ($failed) {
+        if ($tried) return $redis;
+        $tried = true;
+
+        if (!class_exists('Redis')) {
+            error_log('Secret Gate: PHP redis extension not loaded.');
             return null;
         }
 
-        if ($redis === null) {
-            if (!class_exists('Redis')) {
-                $failed = true;
+        try {
+            $r = new Redis();
+            $connected = $r->connect(
+                getenv('REDIS_HOST') ?: '127.0.0.1',
+                (int)(getenv('REDIS_PORT') ?: 6379),
+                0.5
+            );
+
+            if (!$connected) {
+                error_log('Secret Gate: Redis connect() returned false.');
                 return null;
             }
-            try {
-                $redis = new Redis();
-                $connected = $redis->connect(getenv('REDIS_HOST') ?: '127.0.0.1', (int)(getenv('REDIS_PORT') ?: 6379), 1.0);
-                if (!$connected) {
-                    throw new Exception('connect() returned false');
-                }
-                $redis_pass = getenv('REDIS_PASS') ?: '';
-                if ($redis_pass !== '') {
-                    $redis->auth($redis_pass);
-                }
-            } catch (Exception $e) {
-                error_log('Redis connection failed: ' . $e->getMessage());
-                $redis = null;
-                $failed = true;
+
+            $pass = getenv('REDIS_PASS') ?: '';
+            if ($pass !== '') {
+                $r->auth($pass);
             }
+
+            $pong = $r->ping();
+            if ($pong !== true && $pong !== '+PONG') {
+                error_log('Secret Gate: Redis PING failed after connect.');
+                return null;
+            }
+
+            $redis = $r;
+        } catch (Exception $e) {
+            error_log('Secret Gate: Redis connection failed — ' . $e->getMessage());
+            return null;
         }
 
         return $redis;
     }
 }
 
-// BLACKLIST – manage temporary IP bans
+// =====================================================================
+// HARD FAIL-CLOSED — Redis is required, no fallback, no disk writes
+// =====================================================================
+$redis_health = get_redis();
+
+if ($redis_health === null) {
+    // Log once — not per request. Use a rate-limited file flag.
+    $flag = sys_get_temp_dir() . '/sg_redis_down.flag';
+    $should_log = !file_exists($flag) || (time() - filemtime($flag)) > 300;
+    if ($should_log) {
+        @touch($flag);
+        error_log('Secret Gate: Redis unavailable — serving 503 maintenance page.');
+    }
+
+    http_response_code(503);
+    header('Retry-After: 30');
+    header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header_remove('Content-Security-Policy');
+    ?><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Secret Gate — Maintenance</title>
+    <link rel="icon" type="image/png" href="./images/secret_gate_logo.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000; color: #fff; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 24px;
+        }
+        .card {
+            max-width: 440px; text-align: center;
+            background: #111317; border: 1px solid rgba(76,80,85,0.7);
+            border-radius: 28px; padding: 40px 32px;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+        }
+        .badge {
+            display: inline-block;
+            font-size: 0.7rem; letter-spacing: 2.5px; color: #FF8F00;
+            text-transform: uppercase; margin-bottom: 18px;
+        }
+        h1 {
+            font-size: 1.6rem; font-weight: 600; margin-bottom: 12px;
+            background: linear-gradient(to bottom, #fff 0%, #9aa1ab 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        p {
+            color: rgba(255,255,255,0.68); font-size: 0.9rem;
+            line-height: 1.6; margin-bottom: 20px;
+        }
+        .timer {
+            font-size: 0.78rem; color: #47A5FF;
+            padding: 10px 18px; border-radius: 999px;
+            background: rgba(71,165,255,0.08);
+            border: 1px solid rgba(71,165,255,0.2);
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="badge">● Service Temporarily Unavailable</div>
+        <h1>We'll Be Right Back</h1>
+        <p>Secret Gate is briefly unavailable while we restore a core service. Your messages remain encrypted and safe. Please refresh in a moment.</p>
+        <div class="timer">Auto-retry: <span id="t">30</span>s</div>
+    </div>
+    <script>
+        var s = 30, el = document.getElementById('t');
+        setInterval(function () {
+            s--;
+            if (s <= 0) { location.reload(); return; }
+            el.textContent = s;
+        }, 1000);
+    </script>
+</body>
+</html><?php
+    exit;
+}
+
+// Redis is alive — clear the "down" flag so next failure logs again
+$flag = sys_get_temp_dir() . '/sg_redis_down.flag';
+if (file_exists($flag)) @unlink($flag);
+
+// =====================================================================
+// CLIENT IP — trusted-proxy aware (Cloudflare)
+// =====================================================================
+if (!function_exists('getClientIp')) {
+    function getClientIp(): string {
+        $remote = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+
+        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+            $cf_ranges = [
+                '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22',
+                '103.31.4.0/22', '141.101.64.0/18', '108.162.192.0/18',
+                '190.93.240.0/20', '188.114.96.0/20', '197.234.240.0/22',
+                '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/13',
+                '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
+            ];
+            $ip_long = ip2long($remote);
+            if ($ip_long !== false) {
+                foreach ($cf_ranges as $cidr) {
+                    list($subnet, $mask) = explode('/', $cidr);
+                    $subnet_long = ip2long($subnet);
+                    $mask_long = -1 << (32 - (int)$mask);
+                    if (($ip_long & $mask_long) === ($subnet_long & $mask_long)) {
+                        $cf_ip = filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP);
+                        if ($cf_ip) return $cf_ip;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $remote;
+    }
+}
+
+// =====================================================================
+// BLACKLIST / BURN / RATE LIMIT — Redis only, fail-closed
+// =====================================================================
+
 if (!function_exists('is_ip_blacklisted')) {
     function is_ip_blacklisted(string $ip): bool {
         $redis = get_redis();
-        if ($redis) {
-            try {
-                return (bool)$redis->exists('sb:blacklist:' . $ip);
-            } catch (Exception $e) {
-                error_log('Redis is_ip_blacklisted failed: ' . $e->getMessage());
-            }
+        if (!$redis) return true; // fail-closed
+        try {
+            return (bool)$redis->exists('sb:blacklist:' . $ip);
+        } catch (Exception $e) {
+            error_log('Redis is_ip_blacklisted failed: ' . $e->getMessage());
+            return true;
         }
-        if (!@file_exists(BLACKLIST_FILE)) return false;
-        $raw = @file_get_contents(BLACKLIST_FILE);
-        if ($raw === false) return false;
-        $data = json_decode($raw, true);
-        return isset($data[$ip]) && ($data[$ip]['until'] ?? 0) > time();
     }
 }
 
 if (!function_exists('add_to_blacklist')) {
     function add_to_blacklist(string $ip, int $duration = 86400, string $reason = ''): void {
         $redis = get_redis();
-        if ($redis) {
-            try {
-                $redis->setex('sb:blacklist:' . $ip, $duration, json_encode([
-                    'reason' => $reason,
-                    'time' => time(),
-                ]));
-                return;
-            } catch (Exception $e) {
-                error_log('Redis add_to_blacklist failed: ' . $e->getMessage());
-            }
+        if (!$redis) return;
+        try {
+            $redis->setex('sb:blacklist:' . $ip, $duration, json_encode([
+                'reason' => $reason,
+                'time' => time(),
+            ]));
+        } catch (Exception $e) {
+            error_log('Redis add_to_blacklist failed: ' . $e->getMessage());
         }
-        $raw = @file_exists(BLACKLIST_FILE) ? @file_get_contents(BLACKLIST_FILE) : '';
-        $data = $raw ? (json_decode($raw, true) ?: []) : [];
-        $data[$ip] = ['until' => time() + $duration, 'reason' => $reason, 'time' => time()];
-        @file_put_contents(BLACKLIST_FILE, json_encode($data, JSON_PRETTY_PRINT), LOCK_EX);
     }
 }
 
 if (!function_exists('remove_from_blacklist')) {
     function remove_from_blacklist(string $ip): void {
         $redis = get_redis();
-        if ($redis) {
-            try {
-                $redis->del('sb:blacklist:' . $ip);
-            } catch (Exception $e) {
-                error_log('Redis remove_from_blacklist failed: ' . $e->getMessage());
-            }
-        }
-        if (!@file_exists(BLACKLIST_FILE)) return;
-        $raw = @file_get_contents(BLACKLIST_FILE);
-        if ($raw === false) return;
-        $data = json_decode($raw, true);
-        if (isset($data[$ip])) {
-            unset($data[$ip]);
-            @file_put_contents(BLACKLIST_FILE, json_encode($data, JSON_PRETTY_PRINT), LOCK_EX);
+        if (!$redis) return;
+        try {
+            $redis->del('sb:blacklist:' . $ip);
+        } catch (Exception $e) {
+            error_log('Redis remove_from_blacklist failed: ' . $e->getMessage());
         }
     }
 }
 
-// BURN – permanently block persistent attackers
 if (!function_exists('burn_ip')) {
     function burn_ip(string $ip, string $reason = 'Persistent attacker'): void {
         $redis = get_redis();
-        if ($redis) {
-            try {
-                if ($redis->hExists('sb:burned_ips', $ip)) return;
-                $redis->hSet('sb:burned_ips', $ip, json_encode([
-                    'burned_at' => time(),
-                    'reason' => $reason,
-                ]));
-                return;
-            } catch (Exception $e) {
-                error_log('Redis burn_ip failed: ' . $e->getMessage());
-            }
+        if (!$redis) return;
+        try {
+            if ($redis->hExists('sb:burned_ips', $ip)) return;
+            $redis->hSet('sb:burned_ips', $ip, json_encode([
+                'burned_at' => time(),
+                'reason' => $reason,
+            ]));
+        } catch (Exception $e) {
+            error_log('Redis burn_ip failed: ' . $e->getMessage());
         }
-        $raw = @file_exists(BURNED_IPS_FILE) ? @file_get_contents(BURNED_IPS_FILE) : '';
-        $burned = $raw ? (json_decode($raw, true) ?: []) : [];
-        if (isset($burned[$ip])) return;
-        $burned[$ip] = ['burned_at' => time(), 'reason' => $reason];
-        @file_put_contents(BURNED_IPS_FILE, json_encode($burned, JSON_PRETTY_PRINT), LOCK_EX);
     }
 }
 
 if (!function_exists('is_ip_burned')) {
     function is_ip_burned(string $ip): bool {
         $redis = get_redis();
-        if ($redis) {
-            try {
-                return (bool)$redis->hExists('sb:burned_ips', $ip);
-            } catch (Exception $e) {
-                error_log('Redis is_ip_burned failed: ' . $e->getMessage());
-            }
+        if (!$redis) return true; // fail-closed
+        try {
+            return (bool)$redis->hExists('sb:burned_ips', $ip);
+        } catch (Exception $e) {
+            error_log('Redis is_ip_burned failed: ' . $e->getMessage());
+            return true;
         }
-        if (!@file_exists(BURNED_IPS_FILE)) return false;
-        $raw = @file_get_contents(BURNED_IPS_FILE);
-        if ($raw === false) return false;
-        $data = json_decode($raw, true);
-        return isset($data[$ip]);
     }
 }
 
-// RATE LIMIT – throttle requests per IP
+if (!function_exists('record_failed_auth_attempt')) {
+    function record_failed_auth_attempt(string $ip, int $limit = 8, int $window = 300, int $banDuration = 1800): void {
+        $redis = get_redis();
+        if (!$redis) return;
+        try {
+            $key = 'sb:failauth:' . $ip;
+            $count = $redis->incr($key);
+            if ($count === 1) {
+                $redis->expire($key, $window);
+            }
+            if ($count >= $limit) {
+                add_to_blacklist($ip, $banDuration, 'Too many failed password attempts');
+            }
+        } catch (Exception $e) {
+            error_log('Redis record_failed_auth_attempt failed: ' . $e->getMessage());
+        }
+    }
+}
+
 if (!function_exists('rate_limit_check')) {
     function rate_limit_check(string $ip, int $limit = 30, int $window = 30): bool {
         $redis = get_redis();
-        if ($redis) {
-            try {
-                $key = 'sb:rl:' . md5($ip . ':' . $limit . ':' . $window);
-                $now = microtime(true);
-                $redis->zRemRangeByScore($key, 0, $now - $window);
-                $count = $redis->zCard($key);
-                if ($count >= $limit) {
-                    return false;
-                }
-                $redis->zAdd($key, $now, $now . ':' . bin2hex(random_bytes(4)));
-                $redis->expire($key, $window + 1);
-                return true;
-            } catch (Exception $e) {
-                error_log('Redis rate_limit_check failed: ' . $e->getMessage());
+        if (!$redis) return false; // fail-closed
+        try {
+            $key = 'sb:rl:' . md5($ip . ':' . $limit . ':' . $window);
+            $now = microtime(true);
+            $redis->zRemRangeByScore($key, 0, $now - $window);
+            $count = $redis->zCard($key);
+            if ($count >= $limit) {
+                return false;
             }
-        }
-
-        $file = RATE_LIMIT_DIR . '/' . md5($ip) . '.json';
-        $now = time();
-        $raw = @file_exists($file) ? @file_get_contents($file) : '';
-        $data = $raw ? (json_decode($raw, true) ?: []) : [];
-        $data['requests'] = array_filter(
-            $data['requests'] ?? [],
-            fn($t) => $t > $now - $window
-        );
-        if (count($data['requests']) >= $limit) {
+            $redis->zAdd($key, $now, $now . ':' . bin2hex(random_bytes(4)));
+            $redis->expire($key, $window + 1);
+            return true;
+        } catch (Exception $e) {
+            error_log('Redis rate_limit_check failed: ' . $e->getMessage());
             return false;
         }
-        $data['requests'][] = $now;
-        if (@file_put_contents($file, json_encode($data), LOCK_EX) === false) {
-            error_log("Secret Gate: cannot write rate-limit file $file (permissions?) — allowing request through");
-        }
-        return true;
     }
 }
 
@@ -432,7 +491,6 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
 
-// INIT FLAG – mark security as loaded
 if (!defined('SECURITY_INIT')) {
     define('SECURITY_INIT', true);
 }
@@ -440,5 +498,3 @@ if (!defined('SECURITY_INIT')) {
 // =====================================================================
 // CONGRATULATIONS, YOU HAVE REACHED THE END:)
 // =====================================================================
-
-?>

@@ -4,8 +4,8 @@
 /**
  * SECRET GATE - ZERO-KNOWLEDGE EPHEMERAL MESSAGING ENGINE
  *
- * @package     SecretGate
- * @version     1.0.0-Release
+ * @package     Secret-Gate
+ * @version     1.5.0-Release
  * 
  * @author      Sasiru Mindaka <info@secretgate.site>
  * @copyright   2026 Sasiru Mindaka
@@ -30,8 +30,7 @@ http_response_code(403);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>403 – Access Denied | SecretBox</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtmtKQu8TiXCHybz5G3fK2iKMreG49adK6U3bh22Rbc2Cf1+A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title>403 – Access Denied | Secret Gate</title>
     <link rel="icon" type="image/png" href="./images/secret_gate_logo.png">
             <style nonce="<?php echo htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8'); ?>">
         body {
@@ -59,10 +58,11 @@ http_response_code(403);
     <div class="container">
         <h1>403</h1>
         <p>Access to this resource is forbidden.</p>
-        <a href="https://secretgate.site">Return to Homepage</a> <!-- Add your domain here -->
+        <a href="<?php echo htmlspecialchars(defined('SITE_URL') ? SITE_URL : 'https://secretgate.site', ENT_QUOTES, 'UTF-8'); ?>">Return to Homepage</a>
     </div>
 </body>
 </html>
+
 <?php exit();
 
 // =====================================================================

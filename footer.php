@@ -51,11 +51,3 @@ if (!defined('CONFIG_LOADED')) {
         <a href="terms.php">Terms & Conditions</a>
     </div>
 </footer>
-
-<script nonce="<?php echo htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8'); ?>">
-
-// =====================================================================
-// CONGRATULATIONS, YOU HAVE REACHED THE END:)
-// =====================================================================
-
-</script>

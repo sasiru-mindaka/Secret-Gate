@@ -23,7 +23,7 @@ require_once __DIR__ . '/config.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secret Gate</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,10 +31,6 @@ require_once __DIR__ . '/config.php';
     <!-- Void Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" 
-        integrity="sha512-16esztaSRplJROstbIIdwX3N97V1+pZvV33ABoG1H2OyTttBxEGkTsoIVsiP1iaTtM8b3+hu2kB6pQ4Clr5yug==" 
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
     <!-- Cloudflare Turnstile — explicit render -->
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 
@@ -559,6 +555,24 @@ require_once __DIR__ . '/config.php';
         font-size: 0.65rem;
         }
 
+        .inbox-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+        }
+
+        #btn-refresh-inbox {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        line-height: 1;
+        }
+
         #messagesContainer {
         flex: 1;
         overflow-y: auto;
@@ -718,24 +732,6 @@ require_once __DIR__ . '/config.php';
         background: var(--surface-2);
         }
 
-        .back-home-link {
-        text-align: center;
-        margin-top: 20px;
-        font-family: var(--font-mono);
-        font-size: 0.72rem;
-        letter-spacing: 1px;
-        }
-
-        .back-home-link a {
-        color: var(--text-muted);
-        text-decoration: none;
-        transition: color 0.3s ease;
-        }
-
-        .back-home-link a:hover {
-        color: var(--accent);
-        }
-
         .loading,
         .empty-msg {
         font-family: var(--font-mono);
@@ -876,6 +872,31 @@ require_once __DIR__ . '/config.php';
         flex-shrink: 0;
         }
 
+        .pw-remember-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 6px 0 14px;
+            font-family: var(--font-mono);
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: color 0.2s ease;
+        }
+        .pw-remember-wrap:hover {
+            color: var(--text);
+        }
+        .pw-remember-wrap input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            flex-shrink: 0;
+            margin: 0;
+        }
+
         .modal-error {
         font-family: var(--font-mono);
         font-size: 0.72rem;
@@ -892,26 +913,6 @@ require_once __DIR__ . '/config.php';
         .modal-actions .btn {
         margin-bottom: 0;
         min-height: 44px;
-        }
-
-        /* Feedback Modal */
-        .hp-field {
-        position: absolute;
-        left: -9999px;
-        top: -9999px;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
-        overflow: hidden;
-        }
-
-        .feedback-char-count {
-        text-align: right;
-        font-family: var(--font-mono);
-        font-size: 0.72rem;
-        color: var(--text-muted);
-        margin-top: -12px;
-        margin-bottom: 18px;
         }
 
         /* Recovery modal */
@@ -1123,51 +1124,6 @@ require_once __DIR__ . '/config.php';
         flex-wrap: wrap;
         }
 
-        .tmr-custom-fields {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        }
-
-        .tmr-custom-input {
-        width: 58px;
-        background: var(--surface-3);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 5px 8px;
-        color: var(--text);
-        font-family: var(--font-mono);
-        font-size: 0.78rem;
-        transition: border-color 0.2s ease, opacity 0.2s ease;
-        }
-
-        .tmr-custom-unit {
-        background: var(--surface-3);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 5px 6px;
-        color: var(--text);
-        font-family: var(--font-mono);
-        font-size: 0.72rem;
-        transition: opacity 0.2s ease;
-        }
-
-        .tmr-custom-input:focus,
-        .tmr-custom-unit:focus {
-        border-color: var(--accent);
-        outline: none;
-        }
-
-        .tmr-custom-input:disabled,
-        .tmr-custom-unit:disabled {
-        opacity: 0.35;
-        cursor: not-allowed;
-        }
-
-        .tmr-custom-row .tmr-radio-dot {
-        display: none;
-        }
-
         .tmr-section-note {
         font-family: var(--font-mono);
         font-size: 0.67rem;
@@ -1266,10 +1222,6 @@ require_once __DIR__ . '/config.php';
         }
         .tmr-radio-text {
         font-size: 0.78rem;
-        }
-        .tmr-custom-input {
-        width: 48px;
-        font-size: 0.72rem;
         }
         }
 
@@ -1598,7 +1550,8 @@ require_once __DIR__ . '/config.php';
         }
 
         .modal-box.secure-reminder {
-        animation: viewFadeIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both, secureReminderGlow 1.7s ease-in-out 0.35s infinite;
+        animation: viewFadeIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        border: 2px solid #ff3b3b;
         }
 
         .secure-reminder .attention {
@@ -1638,42 +1591,6 @@ require_once __DIR__ . '/config.php';
         80% {
         transform: translateX(3px);
         }
-        }
-
-        @keyframes secureReminderGlow {
-        0%, 100% {
-        box-shadow: 0 0 0 0 rgba(255, 143, 0, 0), var(--shadow-hover);
-        }
-        50% {
-        box-shadow: 0 0 0 9px rgba(255, 143, 0, 0.12), var(--shadow-hover);
-        }
-        }
-
-        .secure-reminder-close {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--surface-2);
-        border: 1px solid var(--border-soft);
-        border-radius: 50%;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        line-height: 1;
-        cursor: pointer;
-        padding: 0;
-        transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-        }
-
-        .secure-reminder-close:hover {
-        color: var(--text);
-        background: rgba(255, 255, 255, 0.08);
-        border-color: var(--border);
-        transform: scale(1.08);
         }
 
         .secure-reminder-list {
@@ -1964,8 +1881,8 @@ require_once __DIR__ . '/config.php';
                 <div class="view-label">Inbox Protocol</div>
                 <div class="view-title">CREATE YOUR BOX</div>
                 <div class="view-desc">Generate a unique private link. Receive messages from anyone — no signup, no identity.</div>
-                <button class="btn btn-primary" id="btn-create-link">✨ CREATE SECURE LINK</button>
-                <button class="btn btn-outline" id="btn-restore-view">🔐 RESTORE BACKUP</button>
+                <button class="btn btn-primary" id="btn-create-link">CREATE SECURE LINK</button>
+                <button class="btn btn-outline" id="btn-restore-view">RESTORE BACKUP</button>
             </div>
 
             <!-- VIEW: DASHBOARD -->
@@ -1977,13 +1894,13 @@ require_once __DIR__ . '/config.php';
                     <input type="text" id="shareUrlInput" readonly>
                     <span class="copy-badge">COPY</span>
                 </div>
-                <button class="btn btn-primary" id="btn-check-inbox">📬 CHECK INBOX</button>
-                <button class="insta-btn" id="btn-instagram">📸 Share on Instagram</button>
-                <button class="btn btn-outline" id="btn-show-recovery">💾 COPY RECOVERY CODE</button>
+                <button class="btn btn-primary" id="btn-check-inbox">CHECK INBOX</button>
+                <button class="insta-btn" id="btn-instagram">Share on Instagram</button>
+                <button class="btn btn-outline" id="btn-show-recovery">COPY RECOVERY CODE</button>
                 <button class="btn btn-outline" id="btn-auto-delete-settings">⏱ AUTO-DELETE SETTINGS</button>
+                <button class="btn btn-outline" id="btn-forget-tab">🧹 FORGET THIS TAB</button>
                 <div class="divider"></div>
-                <button class="btn btn-danger" id="btn-delete-link">🗑 TERMINATE LINK</button>
-                <div class="back-home-link"><a href="https://secretgate.site">Home page</a></div> <!-- Add your domain here -->
+                <button class="btn btn-danger" id="btn-delete-link">TERMINATE LINK</button>
             </div>
 
             <div id="view-send" style="display: none;">
@@ -1996,17 +1913,27 @@ require_once __DIR__ . '/config.php';
                     <button type="button" class="prompt-random-btn" id="promptRandomBtn" title="Random question">🔀</button>
                 </div>
                 <div class="cf-turnstile" id="turnstileSendWidget" data-theme="dark" style="margin-bottom: 18px;"></div>
-                <button class="btn btn-primary" id="btn-send-secret">✉️ ENCRYPT & SEND</button>
+                <button class="btn btn-primary" id="btn-send-secret">ENCRYPT & SEND</button>
                 <button class="btn btn-outline" id="btn-cancel-send">CANCEL</button>
+            </div>
+
+            <div id="view-send-invalid" style="display: none;">
+                <div class="view-label">Anonymous Whisper</div>
+                <div class="view-title">LINK NOT AVAILABLE</div>
+                <div class="view-desc">This link has expired, been deleted, or never existed. No message can be sent here.</div>
+                <button class="btn btn-primary" id="btn-invalid-link-home">GO TO HOMEPAGE</button>
             </div>
 
             <div id="view-inbox" style="display: none;">
                 <div class="inbox-header">
                     <div>
-                        <div class="view-label">Secure Vault</div>
+                        <div class="view-label" id="inboxCountLabel">Inbox</div>
                         <div class="view-title">MESSAGES</div>
                     </div>
-                    <button class="btn btn-outline btn-sm" id="btn-back-dashboard">← BACK</button>
+                    <div class="inbox-header-actions">
+                        <button class="btn btn-outline btn-sm" id="btn-refresh-inbox" title="Refresh">↻</button>
+                        <button class="btn btn-outline btn-sm" id="btn-back-dashboard">← BACK</button>
+                    </div>
                 </div>
                 <div id="messagesContainer">
                 </div>
@@ -2032,15 +1959,14 @@ require_once __DIR__ . '/config.php';
 
 <div class="modal-overlay" id="secureReminderOverlay" aria-live="polite">
     <div class="modal-box secure-reminder">
-        <button type="button" class="secure-reminder-close" id="secureReminderClose" aria-label="Close">✕</button>
-        <div class="attention">⚠️ ATTENTION</div>
+        <div class="attention">ATTENTION</div>
         <div class="modal-title">Keep Your Access Safe</div>
         <div class="modal-desc">Your secure link has been created. Please save the information below before this reminder closes.</div>
         <ul class="secure-reminder-list">
-            <li>🔐 <strong>Save your password</strong><br>Keep your Secret Code private and do not share it.</li>
-            <li>💾 <strong>Save your recovery code</strong><br>Use the recovery option on your dashboard and store the code somewhere safe.</li>
+            <li><strong>Save your password</strong><br>Keep your Secret Code private and do not share it.</li>
+            <li><strong>Save your recovery code</strong><br>Use the recovery option on your dashboard and store the code somewhere safe.</li>
         </ul>
-        <div class="secure-reminder-count">Closing automatically in <span id="secureReminderSeconds">5</span>s</div>
+        <div class="secure-reminder-count">Closing automatically in <span id="secureReminderSeconds">15</span>s</div>
         <div class="secure-reminder-progress"><span id="secureReminderBar"></span></div>
     </div>
 </div>
@@ -2060,6 +1986,13 @@ require_once __DIR__ . '/config.php';
                     </svg>
                 </button>
             </div>
+            <label class="pw-remember-wrap" id="pwModalRememberWrap">
+                <input type="checkbox" id="pwModalRemember">
+                <span>Remember on this device</span>
+            </label>
+            <div class="modal-desc pw-remember-note" id="pwModalRememberNote" style="display:none; margin-top:6px; font-size:0.85em; opacity:0.8;">
+                "Remember" only lasts as long as this tab stays open — closing it clears local access. Please save your recovery code so you can always get back in.
+            </div>
         </form>
         <div class="modal-error" id="pwModalError"></div>
         <div class="modal-actions">
@@ -2071,49 +2004,49 @@ require_once __DIR__ . '/config.php';
 
 <div class="modal-overlay" id="recoveryModalOverlay">
     <div class="modal-box">
-        <div class="modal-title">🔐 Recovery Code</div>
+        <div class="modal-title">Recovery Code</div>
         <div class="modal-desc">Copy this code and store it somewhere safe. You'll need it to restore your box on any device.</div>
-        <div class="recovery-warning"><span class="icon">⚠️</span> <strong>Without this recovery code, you cannot decrypt your secret messages.</strong><br>This is the <strong>only</strong> way to recover your inbox if you lose access. Keep it private and secure.</div>
+        <div class="recovery-warning"><span class="icon"></span> <strong>Without this recovery code, you cannot decrypt your secret messages.</strong><br>This is the <strong>only</strong> way to recover your inbox if you lose access. Keep it private and secure.</div>
         <div class="recovery-code-box" id="recoveryCodeDisplay">Loading...</div>
         <div class="modal-actions">
             <button type="button" class="btn btn-outline" id="recoveryModalClose">CLOSE</button>
-            <button type="button" class="btn btn-primary" id="recoveryModalCopy">📋 COPY CODE</button>
+            <button type="button" class="btn btn-primary" id="recoveryModalCopy">COPY CODE</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="forgetTabModalOverlay">
+    <div class="modal-box">
+        <div class="modal-title">Forget This Tab?</div>
+        <div class="modal-desc">This erases the saved password, keys and cookies for this box from this browser only. The box and its messages are <strong>not</strong> deleted from the server.</div>
+        <div class="recovery-warning"><span class="icon"></span> <strong>You will only be able to get back into this box using your recovery code.</strong><br>Make sure you've copied it before continuing.</div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-outline" id="forgetTabModalCancel">CANCEL</button>
+            <button type="button" class="btn btn-danger" id="forgetTabModalConfirm">FORGET THIS TAB</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="autoDeleteModalOverlay">
     <div class="modal-box modal-box-wide">
-        <div class="modal-title">⏱ Auto-Delete Settings</div>
+        <div class="modal-title">Auto-Delete Settings</div>
         <div class="modal-desc">Control how long messages and your box stay alive. Saving requires your secret code.</div>
 
         <div class="modal-scroll-body">
         <div class="tmr-section">
-            <div class="tmr-section-label">🔥 Self-Destruct Timer <span class="tmr-section-hint">applies to new messages</span></div>
+            <div class="tmr-section-label">Self-Destruct Timer <span class="tmr-section-hint">applies to new messages</span></div>
             <div class="tmr-radio-group" id="messageTtlGroup" data-group="messageTtl">
                 <label class="tmr-radio-row"><input type="radio" name="messageTtl" value="0" checked><span class="tmr-radio-text">Off</span><span class="tmr-radio-dot"></span></label>
                 <label class="tmr-radio-row"><input type="radio" name="messageTtl" value="86400"><span class="tmr-radio-text">After 1 day</span><span class="tmr-radio-dot"></span></label>
                 <label class="tmr-radio-row"><input type="radio" name="messageTtl" value="604800"><span class="tmr-radio-text">After 1 week</span><span class="tmr-radio-dot"></span></label>
                 <label class="tmr-radio-row"><input type="radio" name="messageTtl" value="2592000"><span class="tmr-radio-text">After 1 month</span><span class="tmr-radio-dot"></span></label>
                 <label class="tmr-radio-row"><input type="radio" name="messageTtl" value="31536000"><span class="tmr-radio-text">After 12 months</span><span class="tmr-radio-dot"></span></label>
-                <label class="tmr-radio-row tmr-custom-row"><input type="radio" name="messageTtl" value="custom">
-                    <span class="tmr-radio-text">Set Custom Time
-                        <span class="tmr-custom-fields">
-                            <input type="number" min="1" max="999" class="tmr-custom-input" id="messageTtlCustomValue" placeholder="10" disabled>
-                            <select class="tmr-custom-unit" id="messageTtlCustomUnit" disabled>
-                                <option value="3600">hours</option>
-                                <option value="86400" selected>days</option>
-                                <option value="604800">weeks</option>
-                            </select>
-                        </span>
-                    </span>
-                </label>
             </div>
         </div>
 
         <div class="tmr-section">
             <div class="tmr-account-card" id="accountTtlCard">
-                <div class="tmr-account-title">🗑 Delete My Box</div>
+                <div class="tmr-account-title">Delete My Box</div>
                 <div class="tmr-account-row" id="accountTtlSummaryRow">
                     <span class="tmr-account-row-label">If away for</span>
                     <span class="tmr-account-row-value">
@@ -2123,22 +2056,10 @@ require_once __DIR__ . '/config.php';
                 </div>
                 <div class="tmr-radio-group tmr-account-options" id="accountTtlGroup" data-group="accountTtl">
                     <label class="tmr-radio-row"><input type="radio" name="accountTtl" value="0" checked><span class="tmr-radio-text">Off</span><span class="tmr-radio-dot"></span></label>
-                    <label class="tmr-radio-row"><input type="radio" name="accountTtl" value="2592000"><span class="tmr-radio-text">1 month</span><span class="tmr-radio-dot"></span></label>
-                    <label class="tmr-radio-row"><input type="radio" name="accountTtl" value="7776000"><span class="tmr-radio-text">3 months</span><span class="tmr-radio-dot"></span></label>
-                    <label class="tmr-radio-row"><input type="radio" name="accountTtl" value="15552000"><span class="tmr-radio-text">6 months</span><span class="tmr-radio-dot"></span></label>
-                    <label class="tmr-radio-row"><input type="radio" name="accountTtl" value="31536000"><span class="tmr-radio-text">12 months</span><span class="tmr-radio-dot"></span></label>
-                    <label class="tmr-radio-row tmr-custom-row"><input type="radio" name="accountTtl" value="custom">
-                        <span class="tmr-radio-text">Set Custom Time
-                            <span class="tmr-custom-fields">
-                                <input type="number" min="1" max="999" class="tmr-custom-input" id="accountTtlCustomValue" placeholder="18" disabled>
-                                <select class="tmr-custom-unit" id="accountTtlCustomUnit" disabled>
-                                    <option value="2592000" selected>months</option>
-                                    <option value="604800">weeks</option>
-                                    <option value="31536000">years</option>
-                                </select>
-                            </span>
-                        </span>
-                    </label>
+                    <label class="tmr-radio-row"><input type="radio" name="accountTtl" value="86400"><span class="tmr-radio-text">After 1 day</span><span class="tmr-radio-dot"></span></label>
+                    <label class="tmr-radio-row"><input type="radio" name="accountTtl" value="604800"><span class="tmr-radio-text">After 1 week</span><span class="tmr-radio-dot"></span></label>
+                    <label class="tmr-radio-row"><input type="radio" name="accountTtl" value="2592000"><span class="tmr-radio-text">After 1 month</span><span class="tmr-radio-dot"></span></label>
+                    <label class="tmr-radio-row"><input type="radio" name="accountTtl" value="31536000"><span class="tmr-radio-text">After 12 months</span><span class="tmr-radio-dot"></span></label>
                 </div>
             </div>
             <div class="tmr-section-note">If you don't come online at least once within this period, your box and all its messages are permanently deleted. Checking your inbox resets the timer.</div>
@@ -2151,27 +2072,6 @@ require_once __DIR__ . '/config.php';
             <button type="button" class="btn btn-outline" id="autoDeleteModalCancel">CANCEL</button>
             <button type="button" class="btn btn-primary" id="autoDeleteModalSave">SAVE SETTINGS</button>
         </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="feedbackModalOverlay">
-    <div class="modal-box">
-        <div class="modal-title">✉️ Send Feedback</div>
-        <div class="modal-desc">Found a bug, or have an idea? Tell us — this goes straight to the team.</div>
-        <form id="feedbackForm" autocomplete="off">
-            <div class="hp-field" aria-hidden="true">
-                <label for="feedbackWebsite">Website</label>
-                <input type="text" id="feedbackWebsite" name="website" tabindex="-1" autocomplete="off">
-            </div>
-            <textarea id="feedbackMessage" name="message" placeholder="What's on your mind?" rows="5" maxlength="4000" required></textarea>
-            <div class="feedback-char-count"><span id="feedbackCharCount">0</span> / 4000</div>
-            <div class="cf-turnstile" id="turnstileFeedbackWidget" data-theme="dark" style="margin-bottom: 18px;"></div>
-        </form>
-        <div class="modal-error" id="feedbackModalError"></div>
-        <div class="modal-actions">
-            <button type="button" class="btn btn-outline" id="feedbackModalCancel">CANCEL</button>
-            <button type="button" class="btn btn-primary" id="feedbackModalSend">✉️ SEND</button>
         </div>
     </div>
 </div>
@@ -2208,7 +2108,7 @@ require_once __DIR__ . '/config.php';
 </div>
 
 
-<button class="feedback-float-btn" id="feedbackFloatBtn" aria-label="Send feedback">💬</button>
+<a class="feedback-float-btn" href="feedback.php" aria-label="Send feedback"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></a>
 
 <script nonce="<?php echo htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8'); ?>">
 
@@ -2232,126 +2132,6 @@ const TURNSTILE_SITE_KEY = "<?php echo htmlspecialchars(getenv('CF_TURNSTILE_SIT
 let turnstileWidgetId = null;
 
 
-// FEEDBACK PATH – separate channel for reports
-const FEEDBACK_API_BASE = 'feedback-api.php';
-let feedbackCsrfToken = '';
-let feedbackTurnstileWidgetId = null;
-
-// BOT PROTECTION – same check for feedback form
-function renderFeedbackTurnstileWidget(attemptsLeft = 20) {
-    if (feedbackTurnstileWidgetId !== null) return;
-    const container = document.getElementById('turnstileFeedbackWidget');
-    if (!container || !TURNSTILE_SITE_KEY) return;
-    if (typeof turnstile === 'undefined') {
-        if (attemptsLeft <= 0) {
-            console.error('Turnstile script failed to load in time (feedback).');
-            return;
-        }
-        setTimeout(() => renderFeedbackTurnstileWidget(attemptsLeft - 1), 250);
-        return;
-    }
-    feedbackTurnstileWidgetId = turnstile.render(container, {
-        sitekey: TURNSTILE_SITE_KEY,
-        theme: 'dark'
-    });
-}
-
-// CSRF – prepare token before feedback submit
-async function fetchFeedbackCsrfToken() {
-    try {
-        const resp = await fetch(`${FEEDBACK_API_BASE}?action=get_csrf`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        const data = await resp.json();
-        if (data && data.success) feedbackCsrfToken = data.csrf_token;
-    } catch (e) { console.error('Feedback security init failed', e); }
-}
-
-// FEEDBACK UI – open only when needed
-function openFeedbackModal() {
-    document.getElementById('feedbackModalError').textContent = '';
-    document.getElementById('feedbackModalOverlay').style.display = 'flex';
-    if (!feedbackCsrfToken) fetchFeedbackCsrfToken();
-    renderFeedbackTurnstileWidget();
-}
-
-function closeFeedbackModal() {
-    document.getElementById('feedbackModalOverlay').style.display = 'none';
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    const feedbackMsgBox = document.getElementById('feedbackMessage');
-    const feedbackCharCount = document.getElementById('feedbackCharCount');
-    feedbackMsgBox.addEventListener('input', () => {
-        feedbackCharCount.textContent = feedbackMsgBox.value.length;
-    });
-
-    document.getElementById('feedbackModalCancel').addEventListener('click', closeFeedbackModal);
-    document.getElementById('feedbackModalOverlay').addEventListener('click', function (e) {
-        if (e.target === this) closeFeedbackModal();
-    });
-
-    document.getElementById('feedbackFloatBtn').addEventListener('click', openFeedbackModal);
-
-    document.getElementById('feedbackModalSend').addEventListener('click', async function () {
-        const sendBtn = this;
-        const errorEl = document.getElementById('feedbackModalError');
-        const message = feedbackMsgBox.value.trim();
-        errorEl.textContent = '';
-
-        if (!message) {
-            errorEl.textContent = 'Please write a message first.';
-            return;
-        }
-        if (!feedbackCsrfToken) {
-            errorEl.textContent = 'Still setting things up — try again in a moment.';
-            await fetchFeedbackCsrfToken();
-            return;
-        }
-
-        const turnstileResponse = (typeof turnstile !== 'undefined' && feedbackTurnstileWidgetId !== null)
-            ? turnstile.getResponse(feedbackTurnstileWidgetId)
-            : '';
-        if (!turnstileResponse) {
-            errorEl.textContent = 'Please complete the verification.';
-            return;
-        }
-
-        setBtnLoading(sendBtn, true);
-        try {
-            const res = await fetch(FEEDBACK_API_BASE, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
-                body: new URLSearchParams({
-                    action: 'send_feedback',
-                    csrf_token: feedbackCsrfToken,
-                    message: message,
-                    website: document.getElementById('feedbackWebsite').value,
-                    'cf-turnstile-response': turnstileResponse
-                })
-            });
-            const data = await res.json();
-
-            if (data && data.success) {
-                showToastMsg('✅ Thanks — feedback sent!', 3000, 'success');
-                document.getElementById('feedbackForm').reset();
-                feedbackCharCount.textContent = '0';
-                await fetchFeedbackCsrfToken();
-                closeFeedbackModal();
-            } else {
-                errorEl.textContent = (data && data.error) ? data.error : 'Something went wrong.';
-            }
-        } catch (err) {
-            console.error(err);
-            errorEl.textContent = 'Network error. Please try again.';
-        } finally {
-            setBtnLoading(sendBtn, false);
-            if (typeof turnstile !== 'undefined' && feedbackTurnstileWidgetId !== null) {
-                turnstile.reset(feedbackTurnstileWidgetId);
-            }
-        }
-    });
-});
-
 // INSPIRATION PROMPTS – lower friction to encourage quick responses
 const INSPIRATION_PROMPTS = [
     "What's one thing you've always wanted to tell me but never did?",
@@ -2361,7 +2141,7 @@ const INSPIRATION_PROMPTS = [
     "What's your honest first impression of me?",
     "Tell me something you like about me that you'd never say to my face.",
     "What's a rumor you've heard about me?",
-    "Do you have a crush on someone I know? 👀",
+    "Do you have a crush on someone I know? ",
     "What's the nicest thing you can say about me right now?",
     "Roast me. Be honest.",
     "What's something you think I don't know about myself?",
@@ -2465,7 +2245,7 @@ function formatFullDate(dateOrStr) {
 }
 
 // SENSITIVE ACTIONS – reuse secret-code entry instead of many prompts
-function openPasswordModal({ title, desc, confirmLabel = 'CONFIRM', minLength = 0 }) {
+function openPasswordModal({ title, desc, confirmLabel = 'CONFIRM', minLength = 0, showRemember = false, defaultRemember = false }) {
     return new Promise((resolve) => {
         const overlay = document.getElementById('pwModalOverlay');
         const titleEl = document.getElementById('pwModalTitle');
@@ -2476,6 +2256,9 @@ function openPasswordModal({ title, desc, confirmLabel = 'CONFIRM', minLength = 
         const cancelBtn = document.getElementById('pwModalCancel');
         const toggleBtn = document.getElementById('pwModalToggle');
         const eyeIcon = document.getElementById('eyeIcon');
+        const rememberWrap = document.getElementById('pwModalRememberWrap');
+        const rememberCheckbox = document.getElementById('pwModalRemember');
+        const rememberNote = document.getElementById('pwModalRememberNote');
 
         titleEl.textContent = title;
         descEl.textContent = desc;
@@ -2484,6 +2267,17 @@ function openPasswordModal({ title, desc, confirmLabel = 'CONFIRM', minLength = 
         input.type = 'password';
         eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />';
         errorEl.textContent = '';
+
+        // Remember-me checkbox visibility + default state
+        if (showRemember) {
+            rememberWrap.style.display = 'flex';
+            rememberCheckbox.checked = !!defaultRemember;
+            rememberNote.style.display = 'block';
+        } else {
+            rememberWrap.style.display = 'none';
+            rememberCheckbox.checked = false;
+            rememberNote.style.display = 'none';
+        }
 
         overlay.style.display = 'flex';
         setTimeout(() => input.focus(), 60);
@@ -2506,7 +2300,10 @@ function openPasswordModal({ title, desc, confirmLabel = 'CONFIRM', minLength = 
                 input.focus();
                 return;
             }
-            cleanup(val);
+            cleanup({
+                password: val,
+                rememberMe: showRemember && rememberCheckbox.checked
+            });
         }
 
         function onCancel() { cleanup(null); }
@@ -2555,15 +2352,42 @@ function showLoadingOverlay(show) {
     else el.classList.remove('active');
 }
 
-// LOCAL VAULT – keep private keys off the server
-let currentLinkId = localStorage.getItem('sb_link_id');
+// LOCAL VAULT – keep private keys off the server.
+//
+// Storage rule (this is the actual "remember me" contract):
+//   - Remembered  -> localStorage:  survives tab close, works from ANY tab/new tab, until explicitly cleared.
+//   - Not remembered -> sessionStorage: only valid in the tab it was created in; the browser
+//     wipes it automatically the instant that tab is closed. A brand new tab never sees it.
+// storageGet() checks sessionStorage first (this tab's own not-remembered box,
+// if any), then falls back to localStorage (a remembered box, visible from any
+// tab). Checking session first means opening a not-remembered box in one tab
+// doesn't get shadowed by a different remembered box sitting in localStorage,
+// and it means setting a not-remembered box no longer has to wipe localStorage
+// (which used to blow away a previously remembered box under the same key).
+function storageGet(key) {
+    try {
+        const v = sessionStorage.getItem(key);
+        if (v !== null) return v;
+    } catch (e) {}
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+function storageSet(key, value, remembered) {
+    if (remembered) {
+        try { localStorage.setItem(key, value); } catch (e) {}
+        try { sessionStorage.removeItem(key); } catch (e) {}
+    } else {
+        try { sessionStorage.setItem(key, value); } catch (e) {}
+        // Intentionally NOT clearing localStorage here: a different, already
+        // remembered box may be stored under this same key, and opening a
+        // not-remembered box in this tab shouldn't wipe that out.
+    }
+}
+function storageRemove(key) {
+    try { localStorage.removeItem(key); } catch (e) {}
+    try { sessionStorage.removeItem(key); } catch (e) {}
+}
 
-const dbPromise = new Promise((resolve, reject) => {
-    const req = indexedDB.open('Secret Gate Vault', 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore('keys');
-    req.onsuccess = e => resolve(e.target.result);
-    req.onerror = e => reject(e.target.error);
-});
+let currentLinkId = storageGet('sb_link_id');
 
 const PBKDF2_ITERATIONS = 300000;
 function buf2b64(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))); }
@@ -2591,26 +2415,177 @@ async function unwrapPrivateKey(wrappedObj, password) {
     return window.crypto.subtle.importKey("pkcs8", pkcs8, { name: "RSA-OAEP", hash: "SHA-256" }, true, ["decrypt"]);
 }
 
-async function storeWrappedPrivateKey(id, wrappedObj) {
-    const db = await dbPromise;
-    return new Promise(res => { const tx = db.transaction('keys', 'readwrite'); tx.objectStore('keys').put(wrappedObj, id); tx.oncomplete = res; });
-}
-async function getWrappedPrivateKey(id) {
-    const db = await dbPromise;
-    return new Promise(res => { const tx = db.transaction('keys', 'readonly'); const req = tx.objectStore('keys').get(id); req.onsuccess = () => res(req.result); });
+// =====================================================
+// SERVER AUTH KEY – Derives a deterministic auth_key from the password without sending the password to the server.
+// =====================================================
+async function deriveAuthKey(password, existingSaltB64 = null) {
+    const salt = existingSaltB64
+        ? new Uint8Array(b642buf(existingSaltB64))
+        : window.crypto.getRandomValues(new Uint8Array(16));
+
+    const baseKey = await window.crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(password),
+        { name: "PBKDF2" },
+        false,
+        ["deriveBits"]
+    );
+
+    const bits = await window.crypto.subtle.deriveBits(
+        { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+        baseKey,
+        256
+    );
+
+    const authKey = [...new Uint8Array(bits)]
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+
+    const authSalt = buf2b64(salt.buffer);
+
+    return { authKey, authSalt };
 }
 
-async function storeDevicePassword(id, pwd) {
-    const db = await dbPromise;
-    return new Promise(res => { const tx = db.transaction('keys', 'readwrite'); tx.objectStore('keys').put(pwd, `pwd_${id}`); tx.oncomplete = res; });
+// Fetch auth_salt from server for existing links
+async function fetchAuthSalt(publicId) {
+    try {
+        const res = await fetch(`${API_BASE}?action=get_auth_salt&public_id=${encodeURIComponent(publicId)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        return data.success ? data.auth_salt : null;
+    } catch (e) {
+        return null;
+    }
 }
+
+async function storeWrappedPrivateKey(id, wrappedObj, remembered) {
+    storageSet(`sb_${id}`, JSON.stringify(wrappedObj), remembered);
+}
+async function getWrappedPrivateKey(id) {
+    const raw = storageGet(`sb_${id}`);
+    try { return raw ? JSON.parse(raw) : undefined; } catch (e) { return undefined; }
+}
+
+// =====================================================
+// DEVICE KEY – a random, non-extractable AES-GCM key kept in IndexedDB.
+// Used only to encrypt the "remembered" secret code before it's written to
+// localStorage. Because the key is generated with extractable:false, no
+// script (including an XSS payload doing a raw storage/IndexedDB dump, a
+// browser extension reading disk files, or someone copying the profile off
+// a stolen device) can ever read out its bytes — it can only be *used* via
+// crypto.subtle.encrypt/decrypt while pointed at by a live page. That closes
+// the previous hole where the plaintext password sat in localStorage right
+// next to the wrapped private key it was meant to protect.
+// =====================================================
+const SB_KEYSTORE_DB = 'sb_keystore';
+const SB_KEYSTORE_STORE = 'keys';
+const SB_DEVICE_KEY_ID = 'device_key';
+const SB_PWD_ENC_PREFIX = 'SBENC1:';
+
+function sbOpenKeystore() {
+    return new Promise((resolve, reject) => {
+        try {
+            const req = indexedDB.open(SB_KEYSTORE_DB, 1);
+            req.onupgradeneeded = () => { req.result.createObjectStore(SB_KEYSTORE_STORE); };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        } catch (e) { reject(e); }
+    });
+}
+
+async function sbIdbGet(key) {
+    try {
+        const db = await sbOpenKeystore();
+        return await new Promise((resolve, reject) => {
+            const tx = db.transaction(SB_KEYSTORE_STORE, 'readonly');
+            const req = tx.objectStore(SB_KEYSTORE_STORE).get(key);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    } catch (e) { return undefined; }
+}
+
+async function sbIdbSet(key, value) {
+    try {
+        const db = await sbOpenKeystore();
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(SB_KEYSTORE_STORE, 'readwrite');
+            tx.objectStore(SB_KEYSTORE_STORE).put(value, key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (e) {}
+}
+
+async function getOrCreateDeviceKey() {
+    let key = await sbIdbGet(SB_DEVICE_KEY_ID);
+    if (key) return key;
+    key = await window.crypto.subtle.generateKey(
+        { name: 'AES-GCM', length: 256 },
+        false, // non-extractable — raw bytes can never be read out by any script
+        ['encrypt', 'decrypt']
+    );
+    await sbIdbSet(SB_DEVICE_KEY_ID, key);
+    return key;
+}
+
+async function storeDevicePassword(id, pwd, remembered) {
+    if (!remembered) {
+        // Not-remembered boxes already live in sessionStorage only, wiped the
+        // instant this tab closes — nothing persists to disk, so plaintext
+        // here is fine and matches the existing storage contract above.
+        storageSet(`sb_pwd_${id}`, pwd, false);
+        return;
+    }
+
+    // Remembered boxes: never persist the plaintext password. Encrypt it
+    // with the non-extractable per-device key before it touches localStorage.
+    try {
+        const deviceKey = await getOrCreateDeviceKey();
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const ciphertext = await window.crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv }, deviceKey, new TextEncoder().encode(pwd)
+        );
+        const payload = SB_PWD_ENC_PREFIX + JSON.stringify({ c: buf2b64(ciphertext), iv: buf2b64(iv) });
+        storageSet(`sb_pwd_${id}`, payload, true);
+    } catch (e) {
+        // WebCrypto/IndexedDB unavailable — fail closed rather than fall back
+        // to plaintext. User will just be asked for the code again next time.
+        storageRemove(`sb_pwd_${id}`);
+    }
+}
+
 async function getDevicePassword(id) {
-    const db = await dbPromise;
-    return new Promise(res => { const tx = db.transaction('keys', 'readonly'); const req = tx.objectStore('keys').get(`pwd_${id}`); req.onsuccess = () => res(req.result || null); });
+    const raw = storageGet(`sb_pwd_${id}`);
+    if (!raw) return null;
+
+    // Legacy plaintext entries saved before this fix: use it once to unlock,
+    // then immediately re-save it encrypted so plaintext doesn't linger.
+    if (!raw.startsWith(SB_PWD_ENC_PREFIX)) {
+        const wasRemembered = !!(function () { try { return localStorage.getItem(`sb_pwd_${id}`); } catch (e) { return null; } })();
+        try { await storeDevicePassword(id, raw, wasRemembered); } catch (e) {}
+        return raw;
+    }
+
+    try {
+        const obj = JSON.parse(raw.slice(SB_PWD_ENC_PREFIX.length));
+        const deviceKey = await getOrCreateDeviceKey();
+        const plain = await window.crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: new Uint8Array(b642buf(obj.iv)) },
+            deviceKey, b642buf(obj.c)
+        );
+        return new TextDecoder().decode(plain);
+    } catch (e) {
+        // Device key missing/rotated or data corrupted — can't recover the
+        // password; drop the stale entry so the user is cleanly re-prompted.
+        storageRemove(`sb_pwd_${id}`);
+        return null;
+    }
 }
+
 async function deleteDevicePassword(id) {
-    const db = await dbPromise;
-    return new Promise(res => { const tx = db.transaction('keys', 'readwrite'); tx.objectStore('keys').delete(`pwd_${id}`); tx.oncomplete = res; });
+    storageRemove(`sb_pwd_${id}`);
 }
 
 let sessionPrivateKey = null;
@@ -2632,15 +2607,39 @@ async function unlockPrivateKey({ title = 'Unlock Your Box', desc = 'Enter your 
         } catch (e) {}
     }
 
-    const pwd = await openPasswordModal({ title, desc, confirmLabel: 'UNLOCK' });
-    if (!pwd) return null;
+    // LOCAL BACKOFF – not real protection (a wiped storage resets it), but it
+    // slows down casual guessing directly against the client-side unwrap.
+    const failKey = `sb_fail_${currentLinkId}`;
+    const failedAttempts = parseInt(localStorage.getItem(failKey) || '0', 10);
+    if (failedAttempts >= 5) {
+        const delayMs = Math.min(30000, Math.pow(2, failedAttempts - 5) * 1000);
+        showToastMsg(`Too many attempts. Please wait ${Math.round(delayMs / 1000)}s and try again.`, 3000, 'error');
+        await new Promise((r) => setTimeout(r, delayMs));
+    }
+
+    const result = await openPasswordModal({
+        title, desc,
+        confirmLabel: 'UNLOCK',
+        showRemember: true,
+        defaultRemember: false
+    });
+    if (!result) return null;
+    const { password: pwd, rememberMe } = result;
     try {
         const privKey = await unwrapPrivateKey(wrappedObj, pwd);
         sessionPrivateKey = privKey; sessionPrivateKeyId = currentLinkId; sessionPassword = pwd;
-        await storeDevicePassword(currentLinkId, pwd);
+        try { localStorage.removeItem(failKey); } catch (e) {}
+
+        if (rememberMe) {
+            await storeDevicePassword(currentLinkId, pwd, true);
+        } else {
+            await storeDevicePassword(currentLinkId, pwd, false);
+        }
         return privKey;
+
     } catch (e) {
-        showToastMsg('❌ Incorrect secret code!');
+        try { localStorage.setItem(failKey, String(failedAttempts + 1)); } catch (e2) {}
+        showToastMsg('Incorrect secret code!');
         return null;
     }
 }
@@ -2687,26 +2686,25 @@ function showSecureReminder() {
     }, 1000);
 }
 
-document.getElementById('secureReminderClose').addEventListener('click', closeSecureReminder);
-document.getElementById('secureReminderOverlay').addEventListener('click', function (e) {
-    if (e.target === this) closeSecureReminder();
-});
-
 // LINK CREATION – generate keys before server call
 async function generateNewLink() {
     if (!window.crypto || !window.crypto.subtle) {
-        showToastMsg('⚠️ Security Error: Web Crypto requires HTTPS or localhost!');
-        alert('⚠️ Web Cryptography API is disabled by your browser because this site is running on insecure HTTP.\n\nPlease access via http://localhost or setup HTTPS!');
+        showToastMsg('Security Error: Web Crypto requires HTTPS or localhost!');
+        alert('Web Cryptography API is disabled by your browser because this site is running on insecure HTTP.\n\nPlease access via http://localhost or setup HTTPS!');
         return;
     }
 
-    const pwd = await openPasswordModal({
+    const result = await openPasswordModal({
         title: 'Secure Your Box',
         desc: 'Create a Secret Code to protect your inbox. Minimum 8 characters — you\'ll need this to restore your box later.',
         confirmLabel: 'CREATE',
-        minLength: 8
+        minLength: 8,
+        showRemember: true,
+        defaultRemember: false
     });
-    if (!pwd) { showToastMsg('⚠️ Secret code must be at least 8 characters!'); return; }
+    if (!result) { showToastMsg('Secret code must be at least 8 characters!'); return; }
+    const { password: pwd, rememberMe } = result;
+    
 
     const createBtn = document.getElementById('btn-create-link');
     setBtnLoading(createBtn, true);
@@ -2718,30 +2716,35 @@ async function generateNewLink() {
     const pubJWK = await window.crypto.subtle.exportKey("jwk", keyPair.publicKey);
 
     const wrappedPriv = await wrapPrivateKey(keyPair.privateKey, pwd);
-    await storeWrappedPrivateKey(`priv_${publicId}`, wrappedPriv);
-    localStorage.setItem('sb_link_id', publicId);
+    await storeWrappedPrivateKey(`priv_${publicId}`, wrappedPriv, rememberMe);
+    storageSet('sb_link_id', publicId, rememberMe);
     currentLinkId = publicId;
     sessionPrivateKey = keyPair.privateKey;
     sessionPrivateKeyId = publicId;
     sessionPassword = pwd;
-    await storeDevicePassword(publicId, pwd);
+
+    await storeDevicePassword(publicId, pwd, rememberMe);
+
+    // Derive auth_key — the password is never sent to the server.
+    const { authKey, authSalt } = await deriveAuthKey(pwd);
 
     const fd = new FormData();
     fd.append('action', 'create_link');
     fd.append('csrf_token', globalCsrfToken);
     fd.append('public_id', publicId);
     fd.append('public_key', JSON.stringify(pubJWK));
-    fd.append('password', pwd);
+    fd.append('auth_key', authKey);
+    fd.append('auth_salt', authSalt);
 
     const res = await fetch(API_BASE, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd }).catch(e => console.warn(e));
-    if (!res) { showToastMsg('❌ Network error'); return; }
+    if (!res) { showToastMsg('Something went wrong. Please refresh the page and try again.'); return; }
     const data = await res.json();
     if (data.success) {
         showDashboard();
-        showToastMsg('✓ Secure link created!');
+        showToastMsg('Secure link created!');
         setTimeout(showSecureReminder, 250);
     } else {
-        showToastMsg('❌ Error: ' + data.error);
+        showToastMsg('Error: ' + data.error);
     }
     } finally {
         setBtnLoading(createBtn, false);
@@ -2752,7 +2755,7 @@ async function generateNewLink() {
 async function showRecoveryCode() {
     const privKey = await unlockPrivateKey({ title: 'Unlock to View Recovery Code', desc: 'Enter your Secret Code to export your recovery key.' });
     if(!privKey) return;
-    if (!sessionPassword) { showToastMsg('❌ Could not verify secret code'); return; }
+    if (!sessionPassword) { showToastMsg('Could not verify secret code'); return; }
 
     const recoveryBtn = document.getElementById('btn-show-recovery');
     setBtnLoading(recoveryBtn, true);
@@ -2780,7 +2783,7 @@ document.getElementById('recoveryModalOverlay').addEventListener('click', functi
 document.getElementById('recoveryModalCopy').addEventListener('click', function() {
     const code = document.getElementById('recoveryCodeDisplay').textContent;
     navigator.clipboard.writeText(code).then(() => {
-        showToastMsg('✓ Recovery code copied!', 2000, 'success');
+        showToastMsg('Recovery code copied!', 2000, 'success');
         document.getElementById('recoveryModalOverlay').style.display = 'none';
     }).catch(() => {
         const range = document.createRange();
@@ -2791,7 +2794,7 @@ document.getElementById('recoveryModalCopy').addEventListener('click', function(
         sel.addRange(range);
         document.execCommand('copy');
         sel.removeAllRanges();
-        showToastMsg('✓ Recovery code copied!', 2000, 'success');
+        showToastMsg('Recovery code copied!', 2000, 'success');
         document.getElementById('recoveryModalOverlay').style.display = 'none';
     });
 });
@@ -2806,58 +2809,71 @@ async function performRestore() {
         if(match) base64String = match[1];
         const parsed = JSON.parse(atob(base64String));
         const id = parsed.id;
-        const pwd = await openPasswordModal({
+        const result = await openPasswordModal({
             title: 'Unlock Your Box',
             desc: `Enter the Secret Code for Box [${id}] to restore it on this device.`,
-            confirmLabel: 'UNLOCK'
+            confirmLabel: 'UNLOCK',
+            showRemember: true,
+            defaultRemember: false
         });
-        if(!pwd) return;
+        if(!result) return;
+        const { password: pwd, rememberMe } = result;
 
         const restoreBtn = document.getElementById('btn-perform-restore');
         setBtnLoading(restoreBtn, true);
         try {
+        const saltB64 = await fetchAuthSalt(id);
+        if (!saltB64) { showToastMsg('Could not fetch link info'); return; }
+
+        const { authKey } = await deriveAuthKey(pwd, saltB64);
+
         const fd = new FormData();
         fd.append('action', 'verify_restore');
         fd.append('csrf_token', globalCsrfToken);
         fd.append('public_id', id);
-        fd.append('password', pwd);
+        fd.append('auth_key', authKey);
         const res = await fetch(API_BASE, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
         const data = await res.json();
-        if (!data.success) { showToastMsg('❌ Incorrect secret code!'); return; }
+        if (!data.success) { showToastMsg('Incorrect secret code!'); return; }
+        // The server rotates the session/CSRF token on a successful restore
+        // (session-fixation hardening); pick up the new token for later calls.
+        if (data.csrf_token) globalCsrfToken = data.csrf_token;
 
         let privKey;
         if (parsed.wrapped) {
             try { privKey = await unwrapPrivateKey(parsed.wrapped, pwd); }
-            catch (e) { showToastMsg('❌ Secret code does not match this recovery code.'); return; }
+            catch (e) { showToastMsg('Secret code does not match this recovery code.'); return; }
         } else if (parsed.key) {
             privKey = await window.crypto.subtle.importKey("jwk", parsed.key, { name: "RSA-OAEP", hash: "SHA-256" }, true, ["decrypt"]);
         } else {
-            showToastMsg('❌ Invalid recovery string format');
+            showToastMsg('Invalid recovery string format');
             return;
         }
 
         const wrappedPriv = await wrapPrivateKey(privKey, pwd);
-        await storeWrappedPrivateKey(`priv_${id}`, wrappedPriv);
-        localStorage.setItem('sb_link_id', id);
+        await storeWrappedPrivateKey(`priv_${id}`, wrappedPriv, rememberMe);
+        storageSet('sb_link_id', id, rememberMe);
         currentLinkId = id;
         sessionPrivateKey = privKey;
         sessionPrivateKeyId = id;
         sessionPassword = pwd;
-        await storeDevicePassword(id, pwd);
+
+        await storeDevicePassword(id, pwd, rememberMe);
+
         showDashboard();
-        showToastMsg('✓ Box restored successfully');
+        showToastMsg('Box restored successfully');
         } finally {
             setBtnLoading(restoreBtn, false);
         }
     } catch(e) { 
         console.error(e);
-        showToastMsg('❌ Invalid recovery string format'); 
+        showToastMsg('Invalid recovery string format'); 
     }
 }
 
 // DECRYPTION – support both RSA-only and hybrid AES messages
 async function decryptMessageContent(encBase64, priv) {
-    if(!priv) return "🔐 Key missing (device only)";
+    if(!priv) return "Key missing (device only)";
     const binary = Uint8Array.from(atob(encBase64), c=>c.charCodeAt(0));
     const RSA_CIPHERTEXT_LEN = 256;
     const IV_LEN = 12;
@@ -2876,30 +2892,34 @@ async function decryptMessageContent(encBase64, priv) {
             const dec = await window.crypto.subtle.decrypt({ name: "RSA-OAEP" }, priv, binary);
             return new TextDecoder().decode(dec);
         }
-    } catch(e) { return "❌ Decryption failed"; }
+    } catch(e) { return "Decryption failed"; }
 }
 
 // INBOX FETCH – decrypt only on the owner's device
 async function fetchMessages() {
     showView('view-inbox');
     const container = document.getElementById('messagesContainer');
+    const countLabel = document.getElementById('inboxCountLabel');
     container.innerHTML = '';
+    if (countLabel) countLabel.textContent = 'Inbox';
 
     const priv = await unlockPrivateKey({
         title: 'Unlock Your Inbox',
         desc: 'Enter your Secret Code to decrypt your messages.'
     });
     if (!priv) {
-        container.innerHTML = '<div class="empty-msg">🔒 Inbox locked. Click "Check Inbox" again and enter your Secret Code to view messages.</div>';
+        container.innerHTML = '<div class="empty-msg">Inbox locked. Click "Check Inbox" again and enter your Secret Code to view messages.</div>';
         return;
     }
-    container.innerHTML = '<div class="loading">🔓 Decrypting messages...</div>';
+    container.innerHTML = '<div class="loading">Decrypting messages...</div>';
     try {
         const res = await fetch(`${API_BASE}?action=get_messages&public_id=${currentLinkId}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         const data = await res.json();
         if(!data.messages || data.messages.length === 0) {
+            if (countLabel) countLabel.textContent = 'Inbox — 0 messages';
             container.innerHTML = '<div class="empty-msg">No messages yet. Share your link to receive secrets.</div>'; return;
         }
+        if (countLabel) countLabel.textContent = `Inbox — ${data.messages.length} message${data.messages.length === 1 ? '' : 's'}`;
         container.innerHTML = '';
         const TRUNCATE_AT = 220;
 
@@ -2938,13 +2958,13 @@ async function fetchMessages() {
 
             const storyBtn = document.createElement('button');
             storyBtn.className = 'btn btn-outline btn-sm';
-            storyBtn.textContent = '🎨 Create Story';
+            storyBtn.textContent = 'Create Story';
             storyBtn.addEventListener('click', () => shareToStory(plain));
             actionsEl.appendChild(storyBtn);
 
             const dlBtn = document.createElement('button');
             dlBtn.className = 'btn btn-outline btn-sm';
-            dlBtn.textContent = '⬇️ Download';
+            dlBtn.textContent = 'Download';
             dlBtn.addEventListener('click', () => downloadMessageCard(plain));
             actionsEl.appendChild(dlBtn);
 
@@ -2954,7 +2974,7 @@ async function fetchMessages() {
         }
     } catch(e) {
         console.error(e);
-        container.innerHTML = '<div class="empty-msg">⚠️ Failed to load messages.</div>';
+        container.innerHTML = '<div class="empty-msg">Could not load your messages. Please refresh the page and try again.</div>';
     }
 }
 
@@ -2963,10 +2983,10 @@ async function submitSecretMessage() {
     const params = new URLSearchParams(window.location.search);
     const targetId = params.get('send');
     const msgText = document.getElementById('messageToSend').value.trim();
-    if(!msgText) { showToastMsg('⚠️ Message cannot be empty'); return; }
+    if(!msgText) { showToastMsg('Message cannot be empty'); return; }
 
     const turnstileToken = (typeof turnstile !== 'undefined' && turnstileWidgetId !== null) ? turnstile.getResponse(turnstileWidgetId) : '';
-    if (!turnstileToken) { showToastMsg('⚠️ Please complete the verification check'); return; }
+    if (!turnstileToken) { showToastMsg('Please complete the verification check'); return; }
 
     const sendBtn = document.getElementById('btn-send-secret');
     setBtnLoading(sendBtn, true);
@@ -2974,7 +2994,7 @@ async function submitSecretMessage() {
     try {
         const pubRes = await fetch(`${API_BASE}?action=get_public_key&public_id=${targetId}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         const pubData = await pubRes.json();
-        if(!pubData.success) { showToastMsg('❌ Link is deleted'); setBtnLoading(sendBtn, false); return; }
+        if(!pubData.success) { showToastMsg('Link is deleted'); setBtnLoading(sendBtn, false); return; }
         const pubKey = await window.crypto.subtle.importKey("jwk", JSON.parse(pubData.public_key), { name: "RSA-OAEP", hash: "SHA-256" }, true, ["encrypt"]);
 
         const aesKey = await window.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
@@ -3007,16 +3027,16 @@ async function submitSecretMessage() {
         if (sendData.success) {
             document.getElementById('messageToSend').value = '';
             resetPromptChips();
-            showToastMsg('✓ Secret sent anonymously!');
+            showToastMsg('Secret sent anonymously!');
             setTimeout(()=> { window.location.href = window.location.pathname; }, 1500);
         } else {
-            showToastMsg('❌ ' + sendData.error);
+            showToastMsg('' + sendData.error);
             if (typeof turnstile !== 'undefined' && turnstileWidgetId !== null) turnstile.reset(turnstileWidgetId);
             setBtnLoading(sendBtn, false);
         }
     } catch(e) {
         console.error('submitSecretMessage failed:', e);
-        showToastMsg('❌ Failed to send');
+        showToastMsg('Failed to send');
         if (typeof turnstile !== 'undefined' && turnstileWidgetId !== null) turnstile.reset(turnstileWidgetId);
         setBtnLoading(sendBtn, false);
     }
@@ -3024,43 +3044,38 @@ async function submitSecretMessage() {
 
 // DESTRUCTIVE ACTION – require secret code before delete
 async function deletePermanentLink() {
-    const pwd = await openPasswordModal({
-        title: '🗑 Terminate Link',
+    const result = await openPasswordModal({
+        title: 'Terminate Link',
         desc: 'Enter your Secret Code to permanently delete this link and all its messages. This action cannot be undone.',
-        confirmLabel: 'DELETE FOREVER'
+        confirmLabel: 'DELETE FOREVER',
+        showRemember: false
     });
-    if (!pwd) { showToastMsg('Termination cancelled'); return; }
+    if (!result) { showToastMsg('Termination cancelled'); return; }
+    const { password: pwd } = result;
 
     const deleteBtn = document.getElementById('btn-delete-link');
     setBtnLoading(deleteBtn, true);
     try {
-        const fd = new FormData();
-        fd.append('action', 'verify_restore');
-        fd.append('csrf_token', globalCsrfToken);
-        fd.append('public_id', currentLinkId);
-        fd.append('password', pwd);
-        const res = await fetch(API_BASE, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
-        const data = await res.json();
-        if (!data.success) { showToastMsg('❌ Incorrect secret code! Link not deleted.', 3000, 'error'); return; }
+        const saltB64 = await fetchAuthSalt(currentLinkId);
+        if (!saltB64) { showToastMsg('Could not fetch link info'); return; }
+
+        const { authKey } = await deriveAuthKey(pwd, saltB64);
 
         const fd2 = new FormData();
         fd2.append('action', 'delete_link');
         fd2.append('csrf_token', globalCsrfToken);
         fd2.append('public_id', currentLinkId);
-        fd2.append('password', pwd);
+        fd2.append('auth_key', authKey);
         const delRes = await fetch(API_BASE, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd2 });
         const delData = await delRes.json();
-        if (!delData.success) { showToastMsg('❌ ' + (delData.error || 'Could not delete link.'), 3000, 'error'); return; }
+        if (!delData.success) { showToastMsg('' + (delData.error || 'Could not delete link.'), 3000, 'error'); return; }
 
-        localStorage.removeItem('sb_link_id');
-        const db = await dbPromise;
-        db.transaction('keys', 'readwrite').objectStore('keys').delete(`priv_${currentLinkId}`);
-        db.transaction('keys', 'readwrite').objectStore('keys').delete(`pwd_${currentLinkId}`);
         sessionPrivateKey = null; sessionPrivateKeyId = null; sessionPassword = null;
-        showToastMsg('✓ Link terminated permanently.', 3000, 'success');
+        clearAllBrowserTraces();
+        showToastMsg('Link terminated permanently.', 3000, 'success');
         setTimeout(() => { window.location.reload(); }, 800);
     } catch(e) {
-        showToastMsg('❌ Error verifying password', 3000, 'error');
+        showToastMsg('Error verifying password', 3000, 'error');
     } finally {
         setBtnLoading(deleteBtn, false);
     }
@@ -3073,9 +3088,6 @@ function initAutoDeleteRadioGroup(groupEl, onChange) {
         rows.forEach(row => {
             const input = row.querySelector('input[type="radio"]');
             row.classList.toggle('is-checked', input.checked);
-            if (row.classList.contains('tmr-custom-row')) {
-                row.querySelectorAll('.tmr-custom-input, .tmr-custom-unit').forEach(el => { el.disabled = !input.checked; });
-            }
         });
         if (typeof onChange === 'function') onChange();
     }
@@ -3083,7 +3095,7 @@ function initAutoDeleteRadioGroup(groupEl, onChange) {
         const input = row.querySelector('input[type="radio"]');
         input.addEventListener('change', syncHighlight);
         row.addEventListener('click', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            if (e.target.tagName === 'INPUT') return;
             input.checked = true;
             input.dispatchEvent(new Event('change'));
         });
@@ -3092,47 +3104,24 @@ function initAutoDeleteRadioGroup(groupEl, onChange) {
 }
 
 function setTtlRadioGroup(groupEl, seconds) {
-    const presetInputs = groupEl.querySelectorAll('input[type="radio"]:not([value="custom"])');
-    const customInput = groupEl.querySelector('input[value="custom"]');
-    const customValue = groupEl.querySelector('.tmr-custom-input');
-    const customUnit = groupEl.querySelector('.tmr-custom-unit');
+    const inputs = groupEl.querySelectorAll('input[type="radio"]');
     let matched = false;
-
-    if (!seconds || seconds <= 0) {
-        groupEl.querySelector('input[value="0"]').checked = true;
-        matched = true;
-    } else {
-        presetInputs.forEach(input => {
-            if (Number(input.value) === seconds) { input.checked = true; matched = true; }
-        });
-    }
-
-    if (!matched) {
-        customInput.checked = true;
-        const units = Array.from(customUnit.options)
-            .map(o => Number(o.value))
-            .sort((a, b) => b - a);
-        const unit = units.find(u => seconds % u === 0) || units[units.length - 1] || units[0] || 86400;
-        customUnit.value = String(unit);
-        customValue.value = Math.max(1, Math.round(seconds / unit));
-    }
+    inputs.forEach(input => {
+        const isMatch = (!seconds || seconds <= 0) ? input.value === '0' : Number(input.value) === seconds;
+        input.checked = isMatch;
+        if (isMatch) matched = true;
+    });
+    if (!matched) groupEl.querySelector('input[value="0"]').checked = true;
 
     groupEl.querySelectorAll('.tmr-radio-row').forEach(row => {
         const input = row.querySelector('input[type="radio"]');
         row.classList.toggle('is-checked', input.checked);
-        if (row.classList.contains('tmr-custom-row')) {
-            row.querySelectorAll('.tmr-custom-input, .tmr-custom-unit').forEach(el => { el.disabled = !input.checked; });
-        }
     });
 }
 
 function getTtlRadioGroupValue(groupEl) {
     const checked = groupEl.querySelector('input[type="radio"]:checked');
-    if (!checked) return 0;
-    if (checked.value !== 'custom') return Number(checked.value);
-    const amount = Number(groupEl.querySelector('.tmr-custom-input').value) || 0;
-    const unit = Number(groupEl.querySelector('.tmr-custom-unit').value) || 86400;
-    return Math.max(0, Math.round(amount * unit));
+    return checked ? Number(checked.value) : 0;
 }
 
 function updateAccountTtlSummary() {
@@ -3141,13 +3130,6 @@ function updateAccountTtlSummary() {
     if (!groupEl || !display) return;
     const checked = groupEl.querySelector('input[type="radio"]:checked');
     if (!checked || checked.value === '0') { display.textContent = 'Off'; return; }
-    if (checked.value === 'custom') {
-        const amount = document.getElementById('accountTtlCustomValue').value || '1';
-        const unitSel = document.getElementById('accountTtlCustomUnit');
-        const unitText = unitSel.options[unitSel.selectedIndex] ? unitSel.options[unitSel.selectedIndex].text : '';
-        display.textContent = `${amount} ${unitText}`;
-        return;
-    }
     const row = checked.closest('.tmr-radio-row');
     display.textContent = row ? row.querySelector('.tmr-radio-text').textContent.trim() : 'Off';
 }
@@ -3163,10 +3145,6 @@ function ensureAutoDeleteRadiosInit() {
     if (accountCard && summaryRow) {
         summaryRow.addEventListener('click', () => accountCard.classList.toggle('expanded'));
     }
-    const accCustomValue = document.getElementById('accountTtlCustomValue');
-    const accCustomUnit = document.getElementById('accountTtlCustomUnit');
-    if (accCustomValue) accCustomValue.addEventListener('input', updateAccountTtlSummary);
-    if (accCustomUnit) accCustomUnit.addEventListener('change', updateAccountTtlSummary);
 
     updateAccountTtlSummary();
     autoDeleteInitialized = true;
@@ -3215,20 +3193,27 @@ async function openAutoDeleteModal() {
         const messageTtl = getTtlRadioGroupValue(document.getElementById('messageTtlGroup'));
         const accountTtl = getTtlRadioGroupValue(document.getElementById('accountTtlGroup'));
 
-        const pwd = await openPasswordModal({
+        const result = await openPasswordModal({
             title: '⏱ Confirm Auto-Delete Settings',
             desc: 'Enter your Secret Code to save these auto-delete settings.',
-            confirmLabel: 'SAVE'
+            confirmLabel: 'SAVE',
+            showRemember: false
         });
-        if (!pwd) return;
+        if (!result) return;
+        const { password: pwd } = result;
 
         setBtnLoading(saveBtn, true);
         try {
+            const saltB64 = await fetchAuthSalt(currentLinkId);
+            if (!saltB64) { errorEl.textContent = 'Could not fetch link info'; return; }
+
+            const { authKey } = await deriveAuthKey(pwd, saltB64);
+
             const fd = new FormData();
             fd.append('action', 'set_auto_delete_settings');
             fd.append('csrf_token', globalCsrfToken);
             fd.append('public_id', currentLinkId);
-            fd.append('password', pwd);
+            fd.append('auth_key', authKey);
             fd.append('message_ttl_seconds', String(messageTtl));
             fd.append('account_ttl_seconds', String(accountTtl));
             const res = await fetch(API_BASE, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
@@ -3237,14 +3222,14 @@ async function openAutoDeleteModal() {
                 errorEl.textContent = data.error || 'Could not save settings.';
                 return;
             }
-            showToastMsg('✓ Auto-delete settings saved.', 2500, 'success');
+            showToastMsg('Auto-delete settings saved.', 2500, 'success');
             const box = overlay.querySelector('.modal-box');
             box.classList.remove('tmr-saved-flash');
             void box.offsetWidth;
             box.classList.add('tmr-saved-flash');
             setTimeout(close, 500);
         } catch (e) {
-            errorEl.textContent = 'Network error while saving settings.';
+            errorEl.textContent = 'Something went wrong. Please refresh the page and try again.';
         } finally {
             setBtnLoading(saveBtn, false);
         }
@@ -3252,14 +3237,29 @@ async function openAutoDeleteModal() {
 }
 
 // ROUTING – URL decides send vs dashboard vs setup
-function initAppView() {
+async function initAppView() {
     const params = new URLSearchParams(window.location.search);
     const sendTo = params.get('send');
     if(sendTo) {
-        showView('view-send');
-        document.getElementById('sendTargetChip').innerHTML = `<div class="send-to-chip">CONNECTION SECURE</div>`;
+        await routeToSendView(sendTo);
     } else if(currentLinkId) { showDashboard(); } else { showView('view-setup'); }
-    showDonationBanner();
+}
+
+// LINK VALIDATION – confirm the target link still exists before letting anyone type a message
+async function routeToSendView(targetId) {
+    showView('view-send-invalid');
+    try {
+        const res = await fetch(`${API_BASE}?action=get_public_key&public_id=${encodeURIComponent(targetId)}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const data = await res.json();
+        if (data.success) {
+            showView('view-send');
+            document.getElementById('sendTargetChip').innerHTML = `<div class="send-to-chip">CONNECTION SECURE</div>`;
+        } else {
+            showView('view-send-invalid');
+        }
+    } catch (e) {
+        showView('view-send-invalid');
+    }
 }
 
 function showView(viewId) {
@@ -3287,20 +3287,83 @@ async function verifyLinkStillExists() {
     } catch (e) { return; }
     if (currentLinkId !== checkedId) return;
     await clearLocalLinkData(checkedId);
-    showToastMsg('⚠️ This link no longer exists — it may have been deleted.', 4000, 'error');
+    showToastMsg('This link no longer exists — it may have been deleted.', 4000, 'error');
     showView('view-setup');
 }
 
 async function clearLocalLinkData(linkId) {
-    localStorage.removeItem('sb_link_id');
-    localStorage.removeItem('sb_masked_pwd');
-    try {
-        const db = await dbPromise;
-        db.transaction('keys', 'readwrite').objectStore('keys').delete(`priv_${linkId}`);
-        db.transaction('keys', 'readwrite').objectStore('keys').delete(`pwd_${linkId}`);
-    } catch (e) {}
+    storageRemove('sb_link_id');
+    storageRemove(`sb_priv_${linkId}`);
+    storageRemove(`sb_pwd_${linkId}`);
+    storageRemove(`sb_fail_${linkId}`);
     sessionPrivateKey = null; sessionPrivateKeyId = null; sessionPassword = null;
     currentLinkId = null;
+}
+
+// FULL WIPE – on account deletion, scrub everything this browser stored for THIS
+// app (keys prefixed "sb_"), without touching unrelated data other apps on the
+// same domain may have placed in localStorage/sessionStorage.
+function clearAllBrowserTraces() {
+    try {
+        Object.keys(localStorage)
+            .filter((k) => k.startsWith('sb_'))
+            .forEach((k) => localStorage.removeItem(k));
+    } catch (e) {}
+    try {
+        Object.keys(sessionStorage)
+            .filter((k) => k.startsWith('sb_'))
+            .forEach((k) => sessionStorage.removeItem(k));
+    } catch (e) {}
+
+    // Clear every cookie this page can see (server already expires the session cookie)
+    try {
+        document.cookie.split(';').forEach(function (c) {
+            const name = c.split('=')[0].trim();
+            if (!name) return;
+            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname + ';';
+        });
+    } catch (e) {}
+
+    sessionPrivateKey = null; sessionPrivateKeyId = null; sessionPassword = null;
+    currentLinkId = null;
+}
+
+// FORGET THIS TAB – wipe everything THIS browser locally holds for the box
+// (cookies, remembered password, cached private key). The box itself and its
+// messages on the server are untouched — getting back in from any browser
+// afterwards needs the recovery code.
+function openForgetTabModal() {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('forgetTabModalOverlay');
+        const cancelBtn = document.getElementById('forgetTabModalCancel');
+        const confirmBtn = document.getElementById('forgetTabModalConfirm');
+
+        function cleanup(result) {
+            overlay.style.display = 'none';
+            cancelBtn.removeEventListener('click', onCancel);
+            confirmBtn.removeEventListener('click', onConfirm);
+            overlay.removeEventListener('click', onOverlayClick);
+            resolve(result);
+        }
+        function onCancel() { cleanup(false); }
+        function onConfirm() { cleanup(true); }
+        function onOverlayClick(e) { if (e.target === overlay) cleanup(false); }
+
+        cancelBtn.addEventListener('click', onCancel);
+        confirmBtn.addEventListener('click', onConfirm);
+        overlay.addEventListener('click', onOverlayClick);
+        overlay.style.display = 'flex';
+    });
+}
+
+async function forgetThisTab() {
+    const ok = await openForgetTabModal();
+    if (!ok) return;
+
+    clearAllBrowserTraces();
+    showToastMsg('This browser has forgotten this box. Use your recovery code to get back in.', 3500, 'success');
+    setTimeout(() => { window.location.reload(); }, 900);
 }
 
 function showRestoreView() { showView('view-restore'); }
@@ -3314,10 +3377,10 @@ function copyShareLink() {
     inp.select();
     inp.setSelectionRange(0, inp.value.length);
     if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(inp.value).then(() => { showToastMsg('✓ Link copied!', 1800, 'success'); })
-        .catch(() => { try { document.execCommand('copy'); showToastMsg('✓ Link copied!', 1800, 'success'); } catch(e) { showToastMsg('⚠️ Could not copy.', 2500, 'error'); } });
+        navigator.clipboard.writeText(inp.value).then(() => { showToastMsg('Link copied!', 1800, 'success'); })
+        .catch(() => { try { document.execCommand('copy'); showToastMsg('Link copied!', 1800, 'success'); } catch(e) { showToastMsg('Could not copy.', 2500, 'error'); } });
     } else {
-        try { document.execCommand('copy'); showToastMsg('✓ Link copied!', 1800, 'success'); } catch(e) { showToastMsg('⚠️ Could not copy.', 2500, 'error'); }
+        try { document.execCommand('copy'); showToastMsg('Link copied!', 1800, 'success'); } catch(e) { showToastMsg('Could not copy.', 2500, 'error'); }
     }
     inp.setSelectionRange(0, 0);
 }
@@ -3331,23 +3394,21 @@ function shareToInstagram() {
     window.location.href = appDeepLink;
     const start = Date.now();
     const timer = setTimeout(() => { if (Date.now() - start < 2000 && !document.hidden) { window.location.href = webFallback; } }, 1500);
-    window.onblur = () => clearTimeout(timer);
+    window.addEventListener('blur', () => clearTimeout(timer), { once: true });
 }
 
-// STORY CARD – hand off rendering to server-side card
+// STORY CARD – pass the message to social-card.php via sessionStorage so
+// the plaintext never touches the network or the server.
 window.shareToStory = function(text) {
-    const trimmed = text.length > 300 ? text.slice(0,297)+'…' : text;
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = 'social-card.php';
-    form.style.display = 'none';
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'msg';
-    input.value = trimmed;
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
+    const trimmed = text.length > 300 ? text.slice(0, 297) + '…' : text;
+    try {
+        sessionStorage.setItem('sb_social_card_msg', trimmed);
+        window.open('social-card.php', '_blank');
+    } catch (e) {
+        // sessionStorage blocked (private mode, etc.) — URL hash fallback,
+        // still fully client-side, still no server round-trip.
+        window.open('social-card.php#' + encodeURIComponent(trimmed), '_blank');
+    }
 };
 
 // IMAGE EXPORT – generate PNG locally
@@ -3517,7 +3578,7 @@ function downloadMessageCard(text) {
             a.href = url; a.download = `secretgate_${Date.now()}.png`; // Add your site name here
             document.body.appendChild(a); a.click(); a.remove();
             setTimeout(() => URL.revokeObjectURL(url), 1000);
-            showToastMsg('✅ Downloaded!', 2500, 'success');
+            showToastMsg('Downloaded!', 2500, 'success');
         }, 'image/png');
     }, 300);
 }
@@ -3526,7 +3587,6 @@ function downloadMessageCard(text) {
 window.addEventListener('load', function() {
     setTimeout(function() {
         var loader = document.getElementById('loader-wrapper');
-        if (loader) loader.classList.add('hidden');
         var mainContent = document.getElementById('main-wrapper');
         if (mainContent) mainContent.style.display = 'flex';
         initSecurity();
@@ -3534,6 +3594,31 @@ window.addEventListener('load', function() {
         attachEventListeners();
         renderTurnstileWidget();
         initSocialFab();
+
+        // Only start the donation banner's own open animation once the loading
+        // screen has fully faded away. Starting both animations at the same time
+        // makes the banner look half-rendered / cut off while it's still
+        // fighting the loader's fade-out for the same pixels.
+        function revealDonationBanner() {
+            if (bannerRevealed) return;
+            bannerRevealed = true;
+            if (loader) loader.removeEventListener('transitionend', onLoaderFadeEnd);
+            showDonationBanner();
+        }
+        var bannerRevealed = false;
+        function onLoaderFadeEnd(e) {
+            if (e.target !== loader) return;
+            if (e.propertyName !== 'opacity' && e.propertyName !== 'visibility') return;
+            revealDonationBanner();
+        }
+        if (loader) {
+            loader.classList.add('hidden');
+            loader.addEventListener('transitionend', onLoaderFadeEnd);
+            // Fallback in case transitionend never fires (reduced-motion, etc.)
+            setTimeout(revealDonationBanner, 700);
+        } else {
+            revealDonationBanner();
+        }
     }, 1000);
 });
 
@@ -3621,10 +3706,13 @@ function attachEventListeners() {
     document.getElementById('btn-restore-view').addEventListener('click', showRestoreView);
     document.getElementById('url-display').addEventListener('click', copyShareLink);
     document.getElementById('btn-check-inbox').addEventListener('click', fetchMessages);
+    const refreshInboxBtn = document.getElementById('btn-refresh-inbox');
+    if (refreshInboxBtn) refreshInboxBtn.addEventListener('click', fetchMessages);
     document.getElementById('btn-instagram').addEventListener('click', shareToInstagram);
     document.getElementById('btn-show-recovery').addEventListener('click', showRecoveryCode);
     document.getElementById('btn-auto-delete-settings').addEventListener('click', openAutoDeleteModal);
     document.getElementById('btn-delete-link').addEventListener('click', deletePermanentLink);
+    document.getElementById('btn-forget-tab').addEventListener('click', forgetThisTab);
     document.getElementById('btn-send-secret').addEventListener('click', submitSecretMessage);
     document.getElementById('btn-cancel-send').addEventListener('click', goHome);
     document.getElementById('btn-back-dashboard').addEventListener('click', showDashboard);
@@ -3632,6 +3720,8 @@ function attachEventListeners() {
     document.getElementById('btn-cancel-restore').addEventListener('click', goHome);
     const promptRandomBtn = document.getElementById('promptRandomBtn');
     if (promptRandomBtn) promptRandomBtn.addEventListener('click', showRandomPrompt);
+    const invalidLinkHomeBtn = document.getElementById('btn-invalid-link-home');
+    if (invalidLinkHomeBtn) invalidLinkHomeBtn.addEventListener('click', goHome);
 }
 
 // BFCACHE – clear sender state after back navigation

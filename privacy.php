@@ -33,7 +33,6 @@ define('LOADING_ACCESS_ALLOWED', true);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 
     <link rel="icon" type="image/png" href="./images/secret_gate_logo.png">
 
@@ -225,7 +224,8 @@ define('LOADING_ACCESS_ALLOWED', true);
         .btn-link.primary { background: var(--accent); color: #000; border-color: var(--accent); }
         .btn-link.primary:hover { background: #63b2ff; }
 
-        .feedback-float-btn {
+
+        .feedback-float-link {
             position: fixed;
             bottom: 22px;
             right: 22px;
@@ -242,89 +242,14 @@ define('LOADING_ACCESS_ALLOWED', true);
             display: flex;
             align-items: center;
             justify-content: center;
+            text-decoration: none;
             transition: transform .2s cubic-bezier(.2,.9,.4,1), box-shadow .2s ease;
             touch-action: manipulation;
         }
-        .feedback-float-btn:hover { transform: scale(1.05); box-shadow: 0 6px 25px rgba(71,165,255,0.5); }
-        .feedback-float-btn:active { transform: scale(.92); }
-
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 10000;
-            background: rgba(0,0,0,.68);
-            backdrop-filter: blur(7px);
-            -webkit-backdrop-filter: blur(7px);
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal-box {
-            width: 100%;
-            max-width: 410px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: clamp(20px, 5vw, 32px);
-            box-shadow: var(--shadow-hover);
-            text-align: left;
-            animation: viewFadeIn .35s cubic-bezier(.2,.8,.2,1) both;
-        }
-        .modal-title { font-family: var(--font-display); font-size: 1.18rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
-        .modal-desc { font-family: var(--font-mono); font-weight: 300; font-size: .76rem; color: var(--text-muted); line-height: 1.55; margin-bottom: 18px; }
-        .modal-box textarea {
-            width: 100%;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 14px 16px;
-            color: var(--text);
-            font-family: var(--font-body);
-            font-size: 16px;
-            outline: none;
-            resize: vertical;
-            min-height: 130px;
-            transition: border-color .3s ease, box-shadow .3s ease, background .3s ease;
-        }
-        .modal-box textarea::placeholder { color: rgba(255,255,255,.32); }
-        .modal-box textarea:focus { border-color: var(--accent); background: var(--surface-3); box-shadow: 0 0 0 3px var(--accent-glow); }
-        .hp-field { position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
-        .feedback-char-count { text-align: right; font-family: var(--font-mono); font-size: .7rem; color: var(--text-muted); margin-top: 7px; margin-bottom: 16px; }
-        .modal-error { font-family: var(--font-mono); font-size: .71rem; color: var(--danger); min-height: 1.2em; margin: 4px 0 10px; }
-        .modal-actions { display: flex; gap: 10px; }
-        .modal-actions .btn { margin: 0; }
-        .btn {
-            flex: 1;
-            width: 100%;
-            padding: 13px 16px;
-            border-radius: 999px;
-            font-family: var(--font-display);
-            font-size: .76rem;
-            font-weight: 600;
-            letter-spacing: .7px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            min-height: 44px;
-            transition: transform .25s ease, box-shadow .25s ease, background .25s ease, border-color .25s ease;
-        }
-        .btn:hover { transform: translateY(-2px); }
-        .btn-primary { background: var(--accent); color: #000; box-shadow: 0 0 0 1px rgba(71,165,255,.18), 0 10px 30px rgba(71,165,255,.16); }
-        .btn-primary:hover { background: #63b2ff; }
-        .btn-outline { background: transparent; border-color: var(--border); color: var(--text); }
-        .btn-outline:hover { background: var(--surface-3); border-color: var(--accent-soft); }
-        .btn.is-loading { pointer-events: none; opacity: .82; position: relative; color: transparent !important; }
-        .btn.is-loading::after {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 18px; height: 18px;
-            margin: -9px 0 0 -9px;
-            border: 2px solid rgba(255,255,255,.35);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin .7s linear infinite;
+        .feedback-float-link:hover { transform: scale(1.05); box-shadow: 0 6px 25px rgba(71,165,255,0.5); }
+        .feedback-float-link:active { transform: scale(.92); }
+        @media (max-width: 480px) {
+            .feedback-float-link { width: 44px; height: 44px; font-size: 20px; bottom: 16px; right: 16px; }
         }
 
         .loading-overlay {
@@ -499,7 +424,6 @@ define('LOADING_ACCESS_ALLOWED', true);
         .toast.success { border-color: var(--success); }
         .toast.error { border-color: var(--danger); }
 
-        .cf-turnstile { max-width: 100%; overflow: hidden; margin-left: auto; margin-right: auto; }
 
         @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes sectionIn { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -518,9 +442,6 @@ define('LOADING_ACCESS_ALLOWED', true);
             .social-bar a { width: 34px; height: 34px; }
             .social-bar a svg { width: 15px; height: 15px; }
             .social-bar a::after, .follow-us-btn::after { display: none; }
-            .feedback-float-btn { width: 44px; height: 44px; font-size: 20px; bottom: 16px; right: 16px; }
-            .modal-box { padding: 20px; }
-            .modal-actions { flex-direction: column; }
         }
 
         @media (max-width: 380px) {
@@ -534,7 +455,6 @@ define('LOADING_ACCESS_ALLOWED', true);
             .follow-us-btn { width: 36px; height: 36px; }
             .social-bar a { width: 30px; height: 30px; }
             .social-bar a svg { width: 13px; height: 13px; }
-            .feedback-float-btn { width: 40px; height: 40px; font-size: 18px; bottom: 12px; right: 12px; }
             .toast { padding: 10px 16px; font-size: .7rem; bottom: 20px; }
         }
     </style>
@@ -624,11 +544,11 @@ define('LOADING_ACCESS_ALLOWED', true);
 
             <section class="policy-section">
                 <h2>8. Contact &amp; Support</h2>
-                <p>If you have any questions regarding this Privacy Policy or system security practices, you can submit inquiries via the built-in feedback channel on <a href="https://secretgate.site"> <!-- Add your domain here --> secretgate.site</a>.</p>
+                <p>If you have any questions regarding this Privacy Policy or system security practices, you can submit inquiries via the built-in feedback channel on <!-- Add your domain here --><a href="https://secretgate.site">secretgate.site</a>.</p>
             </section>
 
             <div class="bottom-actions">
-                <a class="btn-link primary" href="https://secretgate.site">← BACK TO HOME</a> <!-- Add your domain here -->
+                <!-- Add your domain here --><a class="btn-link primary" href="https://secretgate.site">← BACK TO HOME</a>
             </div>
         </article>
     </div>
@@ -638,26 +558,6 @@ define('LOADING_ACCESS_ALLOWED', true);
 
 <div id="toast" class="toast"></div>
 
-<div class="modal-overlay" id="feedbackModalOverlay">
-    <div class="modal-box">
-        <div class="modal-title">✉️ Send Feedback</div>
-        <div class="modal-desc">Found a bug, or have an idea? Tell us — this goes straight to the team.</div>
-        <form id="feedbackForm" autocomplete="off">
-            <div class="hp-field" aria-hidden="true">
-                <label for="feedbackWebsite">Website</label>
-                <input type="text" id="feedbackWebsite" name="website" tabindex="-1" autocomplete="off">
-            </div>
-            <textarea id="feedbackMessage" name="message" placeholder="What's on your mind?" rows="5" maxlength="4000" required></textarea>
-            <div class="feedback-char-count"><span id="feedbackCharCount">0</span> / 4000</div>
-            <div class="cf-turnstile" id="turnstileFeedbackWidget" data-theme="dark" style="margin-bottom:18px;"></div>
-        </form>
-        <div class="modal-error" id="feedbackModalError"></div>
-        <div class="modal-actions">
-            <button type="button" class="btn btn-outline" id="feedbackModalCancel">CANCEL</button>
-            <button type="button" class="btn btn-primary" id="feedbackModalSend">✉️ SEND</button>
-        </div>
-    </div>
-</div>
 
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-spinner"></div>
@@ -689,16 +589,12 @@ define('LOADING_ACCESS_ALLOWED', true);
     </button>
 </div>
 
-<button class="feedback-float-btn" id="feedbackFloatBtn" aria-label="Send feedback">💬</button>
+<a class="feedback-float-link" href="feedback.php" aria-label="Send feedback"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></a>
 
 <script nonce="<?php echo htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8'); ?>">
 (function () {
     'use strict';
 
-    const FEEDBACK_API_BASE = 'feedback-api.php';
-    const TURNSTILE_SITE_KEY = "<?php echo htmlspecialchars(getenv('CF_TURNSTILE_SITE_KEY') ?: '', ENT_QUOTES, 'UTF-8'); ?>";
-    let feedbackCsrfToken = '';
-    let feedbackTurnstileWidgetId = null;
     let toastTimer = null;
 
     const $ = (id) => document.getElementById(id);
@@ -711,55 +607,6 @@ define('LOADING_ACCESS_ALLOWED', true);
         toast.className = 'toast show' + (type ? ' ' + type : '');
         clearTimeout(toastTimer);
         toastTimer = setTimeout(() => { toast.classList.remove('show'); }, duration);
-    }
-
-    // LOADING INDICATOR – prevent double submits
-    function setBtnLoading(btn, loading) {
-        if (btn) btn.classList.toggle('is-loading', !!loading);
-    }
-
-    // TURNSTILE – library may load late, so retry
-    function renderFeedbackTurnstileWidget(attemptsLeft = 20) {
-        if (feedbackTurnstileWidgetId !== null) return;
-        const container = $('turnstileFeedbackWidget');
-        if (!container || !TURNSTILE_SITE_KEY) return;
-        if (typeof turnstile === 'undefined') {
-            if (attemptsLeft <= 0) return;
-            setTimeout(() => renderFeedbackTurnstileWidget(attemptsLeft - 1), 250);
-            return;
-        }
-        feedbackTurnstileWidgetId = turnstile.render(container, {
-            sitekey: TURNSTILE_SITE_KEY,
-            theme: 'dark'
-        });
-    }
-
-    // CSRF PROTECTION – secure form against cross-site requests
-    async function fetchFeedbackCsrfToken() {
-        try {
-            const resp = await fetch(`${FEEDBACK_API_BASE}?action=get_csrf`, { credentials: 'same-origin' });
-            const data = await resp.json();
-            if (data && data.success) feedbackCsrfToken = data.csrf_token;
-        } catch (e) {
-            console.error('Feedback security init failed', e);
-        }
-    }
-
-    // MODAL OPEN – lazy-load security and focus input
-    function openFeedbackModal() {
-        const overlay = $('feedbackModalOverlay');
-        if (!overlay) return;
-        $('feedbackModalError').textContent = '';
-        overlay.style.display = 'flex';
-        if (!feedbackCsrfToken) fetchFeedbackCsrfToken();
-        renderFeedbackTurnstileWidget();
-        setTimeout(() => $('feedbackMessage')?.focus(), 120);
-    }
-
-    // MODAL CLOSE – hide overlay
-    function closeFeedbackModal() {
-        const overlay = $('feedbackModalOverlay');
-        if (overlay) overlay.style.display = 'none';
     }
 
     // VISUAL EFFECT – animated background for aesthetics
@@ -810,8 +657,6 @@ define('LOADING_ACCESS_ALLOWED', true);
             const main = $('main-wrapper');
             if (main) main.style.display = 'flex';
             showDonationBanner();
-            fetchFeedbackCsrfToken();
-            renderFeedbackTurnstileWidget();
             initSocialFab();
         }, 1000);
     });
@@ -900,88 +745,6 @@ define('LOADING_ACCESS_ALLOWED', true);
     // EVENT BINDING – attach handlers after DOM ready
     document.addEventListener('DOMContentLoaded', function () {
         initStars();
-
-        // CHARACTER COUNT – live update as user types
-        const feedbackMsgBox = $('feedbackMessage');
-        const feedbackCharCount = $('feedbackCharCount');
-        feedbackMsgBox?.addEventListener('input', () => {
-            feedbackCharCount.textContent = feedbackMsgBox.value.length;
-        });
-
-        // MODAL TRIGGER – open feedback modal
-        $('feedbackFloatBtn')?.addEventListener('click', openFeedbackModal);
-
-        // MODAL DISMISSAL – close on cancel, overlay click, or Escape
-        $('feedbackModalCancel')?.addEventListener('click', closeFeedbackModal);
-        $('feedbackModalOverlay')?.addEventListener('click', function (e) {
-            if (e.target === this) closeFeedbackModal();
-        });
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') closeFeedbackModal();
-        });
-
-        // SECURE SUBMISSION – validate and protect feedback
-        $('feedbackModalSend')?.addEventListener('click', async function () {
-            const sendBtn = this;
-            const errorEl = $('feedbackModalError');
-            const message = (feedbackMsgBox?.value || '').trim();
-            errorEl.textContent = '';
-
-            if (!message) {
-                errorEl.textContent = 'Please write a message first.';
-                feedbackMsgBox?.focus();
-                return;
-            }
-            if (!feedbackCsrfToken) {
-                errorEl.textContent = 'Still setting things up — try again in a moment.';
-                await fetchFeedbackCsrfToken();
-                return;
-            }
-
-            const turnstileResponse = (typeof turnstile !== 'undefined' && feedbackTurnstileWidgetId !== null)
-                ? turnstile.getResponse(feedbackTurnstileWidgetId)
-                : '';
-
-            if (TURNSTILE_SITE_KEY && !turnstileResponse) {
-                errorEl.textContent = 'Please complete the verification.';
-                return;
-            }
-
-            setBtnLoading(sendBtn, true);
-            try {
-                const res = await fetch(FEEDBACK_API_BASE, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        action: 'send_feedback',
-                        csrf_token: feedbackCsrfToken,
-                        message: message,
-                        website: $('feedbackWebsite').value,
-                        'cf-turnstile-response': turnstileResponse
-                    })
-                });
-
-                const data = await res.json();
-                if (data && data.success) {
-                    showToastMsg('✅ Thanks — feedback sent!', 3000, 'success');
-                    $('feedbackForm').reset();
-                    feedbackCharCount.textContent = '0';
-                    if (typeof turnstile !== 'undefined' && feedbackTurnstileWidgetId !== null) {
-                        try { turnstile.reset(feedbackTurnstileWidgetId); } catch (e) {}
-                    }
-                    await fetchFeedbackCsrfToken();
-                    closeFeedbackModal();
-                } else {
-                    errorEl.textContent = (data && data.error) ? data.error : 'Something went wrong.';
-                }
-            } catch (err) {
-                console.error(err);
-                errorEl.textContent = 'Network error. Please try again.';
-            } finally {
-                setBtnLoading(sendBtn, false);
-            }
-        });
     });
 })();
 

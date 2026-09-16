@@ -5,7 +5,7 @@
  * SECRET GATE - ZERO-KNOWLEDGE EPHEMERAL ENGINE
  *
  * @package     SecretGate
- * @version     1.0.0-Release
+ * @version     1.5.0-Release
  * 
  * @author      Sasiru Mindaka <info@secretgate.site>
  * @copyright   2026 Sasiru Mindaka
@@ -19,35 +19,18 @@
 
 require_once __DIR__ . '/config.php';
 
-// POST/REDIRECT/GET – avoid browser resubmission prompt
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $secret_msg = '';
-    if (isset($_POST['msg'])) {
-        $secret_msg = trim((string) $_POST['msg']);
-        if (mb_strlen($secret_msg) > 300) {
-            $secret_msg = mb_substr($secret_msg, 0, 297) . '…';
-        }
-    }
-
-    session_reopen();
-    $_SESSION['social_card_msg'] = $secret_msg;
-    session_commit();
-
-    header('Location: ' . basename($_SERVER['PHP_SELF']), true, 303);
-    exit();
-}
-
-// METHOD GUARD – reject anything that isn't the redirected GET
+// METHOD GUARD – this page is GET-only now; the message travels via
+// sessionStorage on the client, never as a POST body, so it's never written
+// to PHP's (disk-backed) session storage.
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(403);
     include __DIR__ . '/403.php';
     exit();
 }
 
-// SESSION PERSIST – keep message across card refreshes
-session_reopen();
-$secret_msg = (string) ($_SESSION['social_card_msg'] ?? '');
-session_commit();
+// The message itself is read client-side from sessionStorage (see the
+// inline script below); the server never receives or stores it, so there's
+// no PHP variable for it here.
 
 ?>
 <!DOCTYPE html>
@@ -61,7 +44,7 @@ session_commit();
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,200;0,300;0,400;0,500;0,600;1,400&family=Oxanium:wght@400;600;700;800&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Poppins:wght@300;400;500;600;700&family=Dancing+Script:wght@400;600;700&family=Bebas+Neue&family=Righteous&family=Nunito:wght@300;400;600;700&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <link rel="icon" type="image/png" href="./images/secret_gate_logo.png">
 
@@ -528,7 +511,27 @@ session_commit();
 
 <script nonce="<?php echo htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8'); ?>">
     // SERVER-INJECTED MESSAGE – avoid reading from URL
-    const SECRET_MSG = <?php echo json_encode($secret_msg, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+    // MESSAGE SOURCE – read from sessionStorage (set by index.php's
+    // shareToStory) instead of a server-rendered value, so the plaintext
+    // never has to be sent to or stored by the server.
+    let SECRET_MSG = '';
+    try {
+        SECRET_MSG = sessionStorage.getItem('sb_social_card_msg') || '';
+        sessionStorage.removeItem('sb_social_card_msg');
+    } catch (e) {
+        SECRET_MSG = '';
+    }
+    // HASH FALLBACK – used when sessionStorage was blocked (private mode,
+    // etc.) and shareToStory fell back to passing the message via the URL
+    // hash instead. The hash never reaches the server (browsers don't send
+    // fragments in requests), so this stays fully client-side too.
+    if (!SECRET_MSG && location.hash.length > 1) {
+        try { SECRET_MSG = decodeURIComponent(location.hash.slice(1)); } catch (e) {}
+        history.replaceState(null, '', location.pathname + location.search);
+    }
+    if (SECRET_MSG.length > 300) {
+        SECRET_MSG = SECRET_MSG.slice(0, 297) + '…';
+    }
 </script>
 <script nonce="<?php echo htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8'); ?>">
     // TRUSTED TYPES – enforce secure DOM policies
@@ -1363,11 +1366,13 @@ session_commit();
     }
 
     // TOAST – transient status message
+    let toastTimer = null;
     function toast(msg, d=2600) {
         const el = document.getElementById('toast');
         el.textContent = msg;
         el.classList.add('show');
-        setTimeout(() => el.classList.remove('show'), d);
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('show'), d);
     }
 
     // BOOT
