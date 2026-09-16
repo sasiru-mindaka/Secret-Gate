@@ -2,10 +2,10 @@
 
 
 /**
- * SECRET GATE - ZERO-KNOWLEDGE EPHEMERAL ENGINE
+ * SECRET GATE - ZERO-KNOWLEDGE EPHEMERAL MESSAGING ENGINE
  *
- * @package     SecretGate
- * @version     1.5.0-Release
+ * @package     Secret-Gate
+ * @version     2.0.0-Release
  * 
  * @author      Sasiru Mindaka <info@secretgate.site>
  * @copyright   2026 Sasiru Mindaka

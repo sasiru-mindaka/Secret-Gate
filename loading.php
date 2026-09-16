@@ -2,10 +2,10 @@
 
 
 /**
- * SECRET GATE - ZERO-KNOWLEDGE EPHEMERAL ENGINE
+ * SECRET GATE - ZERO-KNOWLEDGE EPHEMERAL MESSAGING ENGINE
  *
- * @package     SecretGate
- * @version     1.0.0-Release
+ * @package     Secret-Gate
+ * @version     2.0.0-Release
  * 
  * @author      Sasiru Mindaka <info@secretgate.site>
  * @copyright   2026 Sasiru Mindaka
@@ -98,3 +98,9 @@ if (!in_array($current_script, $allowed_scripts, true)) {
     <div class="loader-text">Secret Gate</div>
     <div class="loader-bar"></div>
 </div>
+
+<!--
+// =====================================================================
+// CONGRATULATIONS, YOU HAVE REACHED THE END:)
+// =====================================================================
+-->
